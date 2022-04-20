@@ -1,13 +1,15 @@
 package core
 
-import "FICSIT-Ordis/internal/core/commands"
+import (
+	"FICSIT-Ordis/internal/core/modules/commands"
+)
 
 type Ordis struct {
-	Commands commands.CommandsModule
+	Commands *commands.CommandsModule
 }
 
 func New() Ordis {
 	return Ordis{
-		Commands: commands.NewModule(),
+		Commands: commands.New(),
 	}
 }
