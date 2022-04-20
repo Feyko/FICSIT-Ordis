@@ -1,0 +1,19 @@
+type PiracyInformation {
+    isPirated: Boolean!
+    commandLine: String
+    path: String
+    cl: String
+}
+
+type AnalysisResult {
+    smlVersion: String
+    gameVersion: String
+    modList: [String!]!
+    piracyInfo: PiracyInformation!
+    isSMLVersionCorrect: Boolean!
+}
+
+extend type Query {
+    analyseFile(fileURL: String!): AnalysisResult!
+    analyseText(text: String!): AnalysisResult!
+}

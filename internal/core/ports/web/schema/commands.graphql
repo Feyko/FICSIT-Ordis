@@ -1,0 +1,31 @@
+type Command {
+    name: String!
+    text: String
+    media: String
+    aliases: [String!]!
+}
+
+input CommandCreation {
+    name: String!
+    text: String
+    media: String
+    aliases: [String!]
+}
+
+input CommandUpdate {
+    name: String
+    text: String
+    media: String
+    aliases: [String!]
+}
+
+type Query {
+    listAllCommands: [Command!]
+    findCommand(name: String!): Command
+}
+
+type Mutation {
+    createCommand(command: CommandCreation!): Command! @isAuthenticated
+    updateCommand(name: String!, command: CommandUpdate!): Command @isAuthenticated
+    deleteCommand(name: String!): Boolean! @isAuthenticated
+}

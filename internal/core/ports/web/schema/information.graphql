@@ -1,0 +1,7 @@
+extend type Query {
+    getLatestInformation: String!
+}
+
+extend type Mutation {
+    setLatestInformation(info: String!): Boolean! @isAuthenticated
+}

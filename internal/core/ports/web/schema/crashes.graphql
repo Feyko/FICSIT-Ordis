@@ -1,0 +1,41 @@
+type Crash {
+    name: String!
+    description: String!
+    regexes: [String!]!
+    text: String
+    media: String
+}
+
+input CrashCreation {
+    name: String!
+    description: String!
+    regexes: [String!]!
+    text: String
+    media: String
+}
+
+input CrashUpdate {
+    name: String
+    description: String
+    regexes: [String]
+    text: String
+    media: String
+}
+
+type CrashMatch {
+    matchedText: String!
+    responseText: String
+    responseMedia: String
+}
+
+extend type Query {
+    listAllCrashes: [Crash!]
+    findCrash(name: String!): Crash
+    crashAnalysis(text: String!): [CrashMatch!]
+}
+
+extend type Mutation {
+    createCrash(Crash: CrashCreation!): Crash! @isAuthenticated
+    updateCrash(Crash: CrashUpdate!): Crash @isAuthenticated
+    deleteCrash(name: String!): Boolean! @isAuthenticated
+}
