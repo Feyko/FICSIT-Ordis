@@ -16,7 +16,7 @@ func (elem ExampleElement) ID() string {
 	return elem.Name
 }
 
-var defaultCommand = ExampleElement{
+var defaultElement = ExampleElement{
 	Name:     "aya",
 	Response: "bop",
 }
@@ -28,7 +28,7 @@ func newModuleWithDefaultCommand(t *testing.T, commands []ExampleElement) *Basic
 }
 
 func createDefaultCommandChecked(t *testing.T, mod *BasicModule[ExampleElement]) {
-	checkedCreate(t, mod, defaultCommand)
+	checkedCreate(t, mod, defaultElement)
 }
 
 func newModuleWithCommands(t *testing.T, commands []ExampleElement) *BasicModule[ExampleElement] {
@@ -43,32 +43,32 @@ func newModuleWithCommands(t *testing.T, commands []ExampleElement) *BasicModule
 
 func checkedCreate(t *testing.T, mod *BasicModule[ExampleElement], cmd ExampleElement) {
 	err := mod.Create(cmd)
-	require.Nil(t, err, "Error when trying to create a command")
+	require.Nil(t, err, "Error when trying to create an element")
 }
 
 func checkedDelete(t *testing.T, mod *BasicModule[ExampleElement], name string) {
 	err := mod.Delete(name)
-	require.Nil(t, err, "Error when trying to delete a command")
+	require.Nil(t, err, "Error when trying to delete an element")
 }
 
 func checkedGet(t *testing.T, mod *BasicModule[ExampleElement], name string) ExampleElement {
 	cmd, err := mod.Get(name)
-	require.Nil(t, err, "Error when trying to get a command")
+	require.Nil(t, err, "Error when trying to get an element")
 	return cmd
 }
 
 func checkedList(t *testing.T, mod *BasicModule[ExampleElement]) []ExampleElement {
 	list, err := mod.List()
-	require.Nil(t, err, "Error when trying to list base")
+	require.Nil(t, err, "Error when trying to list elements")
 	return list
 }
 
 func TestCreate(t *testing.T) {
 	module := newModuleWithDefaultCommand(t, []ExampleElement{})
 
-	err := module.Create(defaultCommand)
+	err := module.Create(defaultElement)
 
-	assert.NotNil(t, err, "Was able to create already existing command")
+	assert.NotNil(t, err, "Was able to create already existing element")
 }
 
 func TestGet(t *testing.T) {
@@ -76,9 +76,9 @@ func TestGet(t *testing.T) {
 
 	createDefaultCommandChecked(t, module)
 
-	cmd := checkedGet(t, module, defaultCommand.Name)
+	cmd := checkedGet(t, module, defaultElement.Name)
 
-	assert.Equal(t, defaultCommand, cmd, "Retrieved command is not the inserted command")
+	assert.Equal(t, defaultElement, cmd, "Retrieved element is not the inserted element")
 }
 
 func TestList(t *testing.T) {
@@ -102,7 +102,7 @@ func TestList(t *testing.T) {
 
 		list := checkedList(t, module)
 
-		assert.Equal(t, test, list, "List of base isn't the same as the list of created base")
+		assert.Equal(t, test, list, "List of elements isn't the same as the list of created elements")
 
 		if len(list) > 0 {
 			list[0].Name = "ThisShouldNotBeAlreadyAName"
@@ -120,24 +120,24 @@ func TestDelete(t *testing.T) {
 
 	createDefaultCommandChecked(t, module)
 
-	checkedDelete(t, module, defaultCommand.Name)
+	checkedDelete(t, module, defaultElement.Name)
 
-	_, err := module.Get(defaultCommand.Name)
+	_, err := module.Get(defaultElement.Name)
 
-	assert.NotNil(t, err, "Successfully retrieved a command that should have been deleted")
+	assert.NotNil(t, err, "Successfully retrieved an element that should have been deleted")
 }
 
 func TestUpdate(t *testing.T) {
 	module := New[ExampleElement]()
 
-	newcmd := defaultCommand
+	newcmd := defaultElement
 	newcmd.Name = "new"
 
 	createDefaultCommandChecked(t, module)
 
-	err := module.Update(defaultCommand.Name, newcmd)
+	err := module.Update(defaultElement.Name, newcmd)
 
-	assert.Nil(t, err, "Error when trying to update a command")
+	assert.Nil(t, err, "Error when trying to update an element")
 
 	cmd := checkedGet(t, module, newcmd.Name)
 
