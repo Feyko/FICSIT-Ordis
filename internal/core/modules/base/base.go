@@ -6,9 +6,13 @@ import (
 	"fmt"
 )
 
-func New[S identifiable.Identifiable]() *BasicModule[S] {
+func NewDefault[S identifiable.Identifiable]() *BasicModule[S] {
+	return New[S](new(repositories.MemoryRepository[S]))
+}
+
+func New[S identifiable.Identifiable](repo repositories.Repository[S]) *BasicModule[S] {
 	return &BasicModule[S]{
-		Repository: &repositories.MemoryRepository[S]{},
+		Repository: repo,
 	}
 }
 

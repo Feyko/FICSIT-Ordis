@@ -15,10 +15,10 @@ func (elem Command) ID() string {
 	return elem.Name
 }
 
-type CommandsModule base.BasicModule[Command]
+type Module base.BasicModule[Command]
 
-func New() *CommandsModule {
-	return &CommandsModule{
-		Repository: repositories.MemoryRepository[Command]{},
+func New(repo repositories.Repository[Command]) *Module[Command] {
+	return &Module[Command]{
+		Repository: repo,
 	}
 }
