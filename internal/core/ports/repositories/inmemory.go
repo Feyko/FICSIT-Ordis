@@ -1,11 +1,13 @@
 package repositories
 
 import (
-	"FICSIT-Ordis/internal/identifiable"
+	"FICSIT-Ordis/internal/id"
 	"fmt"
+	"reflect"
+	"strings"
 )
 
-type MemoryRepository[E identifiable.Identifiable] struct {
+type MemoryRepository[E id.IDer] struct {
 	elements []E
 }
 

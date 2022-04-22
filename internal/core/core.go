@@ -5,7 +5,7 @@ import (
 )
 
 type Ordis struct {
-	Commands *commands.CommandsModule
+	Commands *commands.Module
 }
 
 func New() Ordis {
