@@ -15,10 +15,14 @@ func (elem Command) ID() string {
 	return elem.Name
 }
 
-type Module base.BasicModule[Command]
+type Module struct {
+	base.BasicModule[Command]
+}
 
-func New(repo repositories.Repository[Command]) *Module[Command] {
-	return &Module[Command]{
-		Repository: repo,
+func New(repo repositories.Repository[Command]) *Module {
+	return &Module{
+		base.BasicModule[Command]{
+			Repository: repo,
+		},
 	}
 }

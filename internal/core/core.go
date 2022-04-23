@@ -2,6 +2,7 @@ package core
 
 import (
 	"FICSIT-Ordis/internal/core/modules/commands"
+	"FICSIT-Ordis/internal/core/ports/repositories"
 )
 
 type Ordis struct {
@@ -10,6 +11,6 @@ type Ordis struct {
 
 func New() Ordis {
 	return Ordis{
-		Commands: commands.New(),
+		Commands: commands.New(new(repositories.MemoryRepository[commands.Command])),
 	}
 }
