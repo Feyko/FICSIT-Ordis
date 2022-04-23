@@ -31,6 +31,20 @@ func (repo *MemoryRepository[E]) GetAll() ([]E, error) {
 	return r, nil
 }
 
+func (repo *MemoryRepository[E]) Search(search string) ([]E, error) {
+	var r []E
+	for _, e := range repo.elements {
+		reflected := reflect.ValueOf(e)
+		for i := 0; i < reflected.NumField(); i++ {
+			fieldValue := reflected.Field(i).String() // Might be too broad and a bad fix for "deep" search
+			if strings.Contains(fieldValue, search) {
+				r = append(r, e)
+			}
+		}
+	}
+	return r, nil
+}
+
 func (repo *MemoryRepository[E]) Create(element E) error {
 	_, err := repo.Find(element.ID())
 	if err == nil {
