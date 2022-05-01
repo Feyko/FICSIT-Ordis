@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"FICSIT-Ordis/internal/id"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -31,13 +32,27 @@ func (repo *MemoryRepository[E]) GetAll() ([]E, error) {
 	return r, nil
 }
 
-func (repo *MemoryRepository[E]) Search(search string) ([]E, error) {
+//Terrible code. Need to refactor this asap
+func (repo *MemoryRepository[E]) Search(search string, fields []string) ([]E, error) {
 	var r []E
 	for _, e := range repo.elements {
 		reflected := reflect.ValueOf(e)
-		for i := 0; i < reflected.NumField(); i++ {
-			fieldValue := reflected.Field(i).String() // Might be too broad and a bad fix for "deep" search
-			if strings.Contains(fieldValue, search) {
+		if reflected.Kind() != reflect.Struct {
+			if reflected.Kind() == reflect.String {
+				if strings.Contains(reflected.String(), search) {
+					r = append(r, e)
+					continue
+				}
+			}
+			return nil, errors.New("trying to search an invalid type. Search only supports structs and strings")
+		}
+		for _, fieldName := range fields {
+			field := reflected.FieldByName(fieldName)
+			if field.IsZero() { // This can skip valid values.. let's hope it doesn't. I hate Go's zero value thing
+				continue
+			}
+			fieldString := field.String() // Might be too broad and a bad fix for "deep" search
+			if strings.Contains(fieldString, search) {
 				r = append(r, e)
 			}
 		}

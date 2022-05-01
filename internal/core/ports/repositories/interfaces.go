@@ -13,5 +13,5 @@ type Repository[E id.IDer] interface {
 
 type Searchable[E id.IDer] interface {
 	Repository[E]
-	Search(search string) ([]E, error)
+	Search(search string, fields []string) ([]E, error)
 }
