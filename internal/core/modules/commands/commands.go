@@ -1,9 +1,18 @@
 package commands
 
 import (
+	"FICSIT-Ordis/internal/core/config"
 	"FICSIT-Ordis/internal/core/modules/base"
 	"FICSIT-Ordis/internal/core/ports/repositories"
+	"FICSIT-Ordis/internal/core/ports/repositories/memrepo"
 )
+
+func New(conf config.CommandsConfig) *Module {
+	repo := newRepo(conf)
+	return &Module{
+		*base.New[Command](repo),
+	}
+}
 
 type Command struct {
 	Name,
@@ -19,10 +28,19 @@ type Module struct {
 	base.BasicModule[Command]
 }
 
-func New(repo repositories.Repository[Command]) *Module {
-	return &Module{
-		base.BasicModule[Command]{
-			Repository: repo,
-		},
+type Repo repositories.Repository[Command]
+
+func newRepo(conf config.CommandsConfig) Repo {
+	if conf.Persistent {
+		return newPersistentRepo()
 	}
+	return newMemRepo()
+}
+
+func newPersistentRepo() Repo {
+	return nil
+}
+
+func newMemRepo() Repo {
+	return memrepo.New[Command]()
 }

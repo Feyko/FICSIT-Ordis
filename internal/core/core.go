@@ -1,16 +1,16 @@
 package core
 
 import (
+	"FICSIT-Ordis/internal/core/config"
 	"FICSIT-Ordis/internal/core/modules/commands"
-	"FICSIT-Ordis/internal/core/ports/repositories"
 )
 
 type Ordis struct {
 	Commands *commands.Module
 }
 
-func New() Ordis {
+func New(conf config.OrdisConfig) Ordis {
 	return Ordis{
-		Commands: commands.New(new(repositories.MemoryRepository[commands.Command])),
+		Commands: commands.New(conf.Commands),
 	}
 }

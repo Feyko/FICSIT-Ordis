@@ -1,4 +1,4 @@
-package repositories
+package memrepo
 
 import (
 	"FICSIT-Ordis/internal/id"
@@ -8,16 +8,20 @@ import (
 	"strings"
 )
 
-type MemoryRepository[E id.IDer] struct {
+func New[E id.IDer]() *Repository[E] {
+	return new(Repository[E])
+}
+
+type Repository[E id.IDer] struct {
 	elements []E
 }
 
-func (repo *MemoryRepository[E]) Find(ID string) (E, error) {
+func (repo *Repository[E]) Find(ID string) (E, error) {
 	elem, _, err := repo.findWithIndex(ID)
 	return elem, err
 }
 
-func (repo *MemoryRepository[E]) findWithIndex(ID string) (E, int, error) {
+func (repo *Repository[E]) findWithIndex(ID string) (E, int, error) {
 	for i, elem := range repo.elements {
 		if elem.ID() == ID {
 			return elem, i, nil
@@ -26,14 +30,14 @@ func (repo *MemoryRepository[E]) findWithIndex(ID string) (E, int, error) {
 	return *new(E), 0, fmt.Errorf("element with ID '%v' does not exist", ID)
 }
 
-func (repo *MemoryRepository[E]) GetAll() ([]E, error) {
+func (repo *Repository[E]) GetAll() ([]E, error) {
 	r := make([]E, len(repo.elements))
 	copy(r, repo.elements)
 	return r, nil
 }
 
 //Terrible code. Need to refactor this asap
-func (repo *MemoryRepository[E]) Search(search string, fields []string) ([]E, error) {
+func (repo *Repository[E]) Search(search string, fields []string) ([]E, error) {
 	var r []E
 	for _, e := range repo.elements {
 		reflected := reflect.ValueOf(e)
@@ -60,7 +64,7 @@ func (repo *MemoryRepository[E]) Search(search string, fields []string) ([]E, er
 	return r, nil
 }
 
-func (repo *MemoryRepository[E]) Create(element E) error {
+func (repo *Repository[E]) Create(element E) error {
 	_, err := repo.Find(element.ID())
 	if err == nil {
 		return fmt.Errorf("element with ID '%v' already exists", element.ID())
@@ -69,7 +73,7 @@ func (repo *MemoryRepository[E]) Create(element E) error {
 	return nil
 }
 
-func (repo *MemoryRepository[E]) Update(ID string, newElement E) error {
+func (repo *Repository[E]) Update(ID string, newElement E) error {
 	_, i, err := repo.findWithIndex(ID)
 	if err != nil {
 		return err
@@ -78,7 +82,7 @@ func (repo *MemoryRepository[E]) Update(ID string, newElement E) error {
 	return nil
 }
 
-func (repo *MemoryRepository[E]) Delete(ID string) error {
+func (repo *Repository[E]) Delete(ID string) error {
 	_, i, err := repo.findWithIndex(ID)
 	if err != nil {
 		return err

@@ -2,12 +2,13 @@ package base
 
 import (
 	"FICSIT-Ordis/internal/core/ports/repositories"
+	"FICSIT-Ordis/internal/core/ports/repositories/memrepo"
 	"FICSIT-Ordis/internal/id"
 	"fmt"
 )
 
 func NewDefault[S id.IDer]() *BasicModule[S] {
-	return New[S](new(repositories.MemoryRepository[S]))
+	return New[S](new(memrepo.Repository[S]))
 }
 
 func New[S id.IDer](repo repositories.Repository[S]) *BasicModule[S] {
