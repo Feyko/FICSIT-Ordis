@@ -1,18 +1,18 @@
 package memrepo
 
 import (
-	"FICSIT-Ordis/internal/id"
+	"FICSIT-Ordis/internal/storable"
 	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 )
 
-func New[E id.IDer]() *Repository[E] {
+func New[E storable.I]() *Repository[E] {
 	return new(Repository[E])
 }
 
-type Repository[E id.IDer] struct {
+type Repository[E storable.I] struct {
 	elements []E
 }
 

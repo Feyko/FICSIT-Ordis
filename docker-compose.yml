@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  arango:
+    image: arangodb/arangodb:3.9.1
+    environment:
+      - "ARANGO_ROOT_PASSWORD=${ARANGO_ROOT_PASSWORD}"
+    ports:
+      - 8529:8529

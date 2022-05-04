@@ -1,8 +1,8 @@
 package repositories
 
-import "FICSIT-Ordis/internal/id"
+import "FICSIT-Ordis/internal/storable"
 
-type Repository[E id.IDer] interface {
+type Repository[E storable.I] interface {
 	Find(ID string) (E, error)
 	GetAll() ([]E, error)
 
@@ -11,7 +11,7 @@ type Repository[E id.IDer] interface {
 	Delete(ID string) error
 }
 
-type Searchable[E id.IDer] interface {
+type Searchable[E storable.I] interface {
 	Repository[E]
 	Search(search string, fields []string) ([]E, error)
 }

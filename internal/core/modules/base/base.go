@@ -3,21 +3,21 @@ package base
 import (
 	"FICSIT-Ordis/internal/core/ports/repositories"
 	"FICSIT-Ordis/internal/core/ports/repositories/memrepo"
-	"FICSIT-Ordis/internal/id"
+	"FICSIT-Ordis/internal/storable"
 	"fmt"
 )
 
-func NewDefault[S id.IDer]() *BasicModule[S] {
+func NewDefault[S storable.I]() *BasicModule[S] {
 	return New[S](new(memrepo.Repository[S]))
 }
 
-func New[S id.IDer](repo repositories.Repository[S]) *BasicModule[S] {
+func New[S storable.I](repo repositories.Repository[S]) *BasicModule[S] {
 	return &BasicModule[S]{
 		Repository: repo,
 	}
 }
 
-type BasicModule[S id.IDer] struct {
+type BasicModule[S storable.I] struct {
 	Repository repositories.Repository[S]
 }
 
