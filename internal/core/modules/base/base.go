@@ -1,24 +1,19 @@
 package base
 
 import (
-	"FICSIT-Ordis/internal/core/ports/repositories"
-	"FICSIT-Ordis/internal/core/ports/repositories/memrepo"
-	"FICSIT-Ordis/internal/storable"
+	"FICSIT-Ordis/internal/core/ports/repos"
+	"FICSIT-Ordis/internal/id"
 	"fmt"
 )
 
-func NewDefault[S storable.I]() *BasicModule[S] {
-	return New[S](new(memrepo.Repository[S]))
-}
-
-func New[S storable.I](repo repositories.Repository[S]) *BasicModule[S] {
+func New[S id.IDer](collection repos.Collection) *BasicModule[S] {
 	return &BasicModule[S]{
-		Repository: repo,
+		Collection: collection,
 	}
 }
 
-type BasicModule[S storable.I] struct {
-	Repository repositories.Repository[S]
+type BasicModule[S id.IDer] struct {
+	Collection repos.Collection
 }
 
 func (mod *BasicModule[S]) Create(cmd S) error {
@@ -26,7 +21,7 @@ func (mod *BasicModule[S]) Create(cmd S) error {
 	if err == nil {
 		return fmt.Errorf("element with ID '%v' already exists", cmd.ID())
 	}
-	err = mod.Repository.Create(cmd)
+	err = mod.Collection.Create(cmd)
 	if err != nil {
 		return fmt.Errorf("could not create a new element: %w", err)
 	}
@@ -34,7 +29,7 @@ func (mod *BasicModule[S]) Create(cmd S) error {
 }
 
 func (mod *BasicModule[S]) Get(id string) (S, error) {
-	cmd, err := mod.Repository.Find(id)
+	cmd, err := mod.Collection.Get(id)
 	if err != nil {
 		return *new(S), fmt.Errorf("could not get command: %v", err)
 	}
@@ -42,7 +37,7 @@ func (mod *BasicModule[S]) Get(id string) (S, error) {
 }
 
 func (mod *BasicModule[S]) List() ([]S, error) {
-	elems, err := mod.Repository.GetAll()
+	elems, err := mod.Collection.GetAll()
 	if err != nil {
 		return nil, fmt.Errorf("could not get all the elements: %w", err)
 	}
@@ -50,7 +45,7 @@ func (mod *BasicModule[S]) List() ([]S, error) {
 }
 
 func (mod *BasicModule[S]) Delete(name string) error {
-	err := mod.Repository.Delete(name)
+	err := mod.Collection.Delete(name)
 	if err != nil {
 		return fmt.Errorf("could not delete the element: %w", err)
 	}
@@ -58,7 +53,7 @@ func (mod *BasicModule[S]) Delete(name string) error {
 }
 
 func (mod *BasicModule[S]) Update(name string, newcmd S) error {
-	err := mod.Repository.Update(name, newcmd)
+	err := mod.Collection.Update(name, newcmd)
 	if err != nil {
 		return fmt.Errorf("could not update the element: %w", err)
 	}

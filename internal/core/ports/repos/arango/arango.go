@@ -2,13 +2,13 @@ package arango
 
 import (
 	"FICSIT-Ordis/internal/core/config"
-	"FICSIT-Ordis/internal/storable"
+	"FICSIT-Ordis/internal/id"
 	"fmt"
 	"github.com/arangodb/go-driver"
 	"github.com/arangodb/go-driver/http"
 )
 
-func New[E storable.I](conf config.ArangoConfig, collectionName string) (*Repository[E], error) {
+func New[E id.IDer](conf config.ArangoConfig, collectionName string) (*Repository[E], error) {
 	repo := new(Repository[E])
 	client, err := connectClient(conf)
 	if err != nil {
@@ -57,7 +57,8 @@ func getDatabaseSafe(client driver.Client, conf config.ArangoConfig) (driver.Dat
 
 func ensureDatabaseExists(client driver.Client, conf config.ArangoConfig) error {
 	exists, err := client.DatabaseExists(nil, conf.DBName)
-	if err != nil {
+	forbidden := driver.IsUnauthorized(err)
+	if err != nil && !forbidden {
 		return fmt.Errorf("could not check if the database '%v' exists: %w", conf.DBName, err)
 	}
 
@@ -106,38 +107,38 @@ func ensureCollectionExists(db driver.Database, collectionName string) error {
 	return nil
 }
 
-type Repository[E storable.I] struct {
+type Repository struct {
 	client     driver.Client
 	db         driver.Database
 	collection driver.Collection
 }
 
-func (r Repository[E]) Find(ID string) (E, error) {
+func (r Repository) Get(ID string) (id.IDer, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r Repository[E]) GetAll() ([]E, error) {
+func (r Repository) GetAll() ([]id.IDer, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r Repository[E]) Create(element E) error {
+func (r Repository) Create(element id.IDer) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r Repository[E]) Update(ID string, newElement E) error {
+func (r Repository) Update(ID string, newElement id.IDer) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r Repository[E]) Delete(ID string) error {
+func (r Repository) Delete(ID string) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r Repository[E]) Search(search string, fields []string) ([]E, error) {
+func (r Repository) Search(search string, fields []string) ([]id.IDer, error) {
 	//TODO implement me
 	panic("implement me")
 }

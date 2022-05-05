@@ -3,9 +3,9 @@ package commands
 import (
 	"FICSIT-Ordis/internal/core/config"
 	"FICSIT-Ordis/internal/core/modules/base"
-	"FICSIT-Ordis/internal/core/ports/repositories"
-	"FICSIT-Ordis/internal/core/ports/repositories/arango"
-	"FICSIT-Ordis/internal/core/ports/repositories/memrepo"
+	"FICSIT-Ordis/internal/core/ports/repos"
+	"FICSIT-Ordis/internal/core/ports/repos/arango"
+	"FICSIT-Ordis/internal/core/ports/repos/memrepo"
 	"fmt"
 )
 
@@ -37,7 +37,7 @@ type Module struct {
 	base.BasicModule[Command]
 }
 
-type Repo repositories.Repository[Command]
+type Repo repos.Collection[Command]
 
 func newRepo(conf config.CommandsConfig) (Repo, error) {
 	if conf.Persistent {
