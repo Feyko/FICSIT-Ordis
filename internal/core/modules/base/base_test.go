@@ -32,7 +32,7 @@ func createDefaultCommandChecked(t *testing.T, mod *BasicModule[ExampleElement])
 }
 
 func newModuleWithCommands(t *testing.T, commands []ExampleElement) *BasicModule[ExampleElement] {
-	module := NewDefault[ExampleElement]()
+	module := newDefault[ExampleElement]()
 
 	for _, cmd := range commands {
 		checkedCreate(t, module, cmd)
@@ -72,7 +72,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	module := NewDefault[ExampleElement]()
+	module := newDefault[ExampleElement]()
 
 	createDefaultCommandChecked(t, module)
 
@@ -94,7 +94,7 @@ func TestList(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		module := NewDefault[ExampleElement]()
+		module := newDefault[ExampleElement]()
 
 		for _, cmd := range test {
 			checkedCreate(t, module, cmd)
@@ -116,7 +116,7 @@ func TestList(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	module := NewDefault[ExampleElement]()
+	module := newDefault[ExampleElement]()
 
 	createDefaultCommandChecked(t, module)
 
@@ -128,7 +128,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	module := NewDefault[ExampleElement]()
+	module := newDefault[ExampleElement]()
 
 	newcmd := defaultElement
 	newcmd.Name = "new"

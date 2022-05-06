@@ -10,23 +10,24 @@ import (
 )
 
 func New() Repository {
-	return Repository{make(map[string]repos.Collection)}
+	return Repository{make(map[string]repos.UntypedCollection)}
 }
 
 type Repository struct {
-	collections map[string]repos.Collection
+	collections map[string]repos.UntypedCollection
 }
 
-func (r *Repository) NewCollection(name string) (repos.Collection, error) {
+func (r *Repository) NewCollection(name string) (repos.UntypedCollection, error) {
 	_, err := r.GetCollection(name)
 	if err == nil {
 		return nil, fmt.Errorf("collection '%v' already exists", name)
 	}
-	r.collections[name] = newCollection()
-	return nil, nil
+	collection := newCollection()
+	r.collections[name] = collection
+	return collection, nil
 }
 
-func (r Repository) GetCollection(name string) (repos.Collection, error) {
+func (r Repository) GetCollection(name string) (repos.UntypedCollection, error) {
 	collection := r.collections[name]
 	if collection == nil {
 		return nil, fmt.Errorf("collection '%v' doesn't exist", name)

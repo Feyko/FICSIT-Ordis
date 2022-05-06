@@ -37,7 +37,7 @@ type Module struct {
 	base.BasicModule[Command]
 }
 
-type Repo repos.Collection[Command]
+type Repo repos.UntypedCollection[Command]
 
 func newRepo(conf config.CommandsConfig) (Repo, error) {
 	if conf.Persistent {

@@ -2,18 +2,31 @@ package base
 
 import (
 	"FICSIT-Ordis/internal/core/ports/repos"
+	"FICSIT-Ordis/internal/core/ports/repos/memrepo"
+	"FICSIT-Ordis/internal/core/ports/repos/translators"
 	"FICSIT-Ordis/internal/id"
 	"fmt"
+	"log"
 )
 
-func New[S id.IDer](collection repos.Collection) *BasicModule[S] {
+func newDefault[S id.IDer]() *BasicModule[S] {
+	repo := memrepo.New()
+	collection, err := repo.NewCollection(fmt.Sprintf("%T", *new(S)))
+	if err != nil {
+		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
+	}
+	translator := translators.Wrap[S](collection)
+	return New[S](translator)
+}
+
+func New[S id.IDer](collection repos.TypedCollection[S]) *BasicModule[S] {
 	return &BasicModule[S]{
 		Collection: collection,
 	}
 }
 
 type BasicModule[S id.IDer] struct {
-	Collection repos.Collection
+	Collection repos.TypedCollection[S]
 }
 
 func (mod *BasicModule[S]) Create(cmd S) error {
