@@ -4,18 +4,18 @@ import (
 	"FICSIT-Ordis/internal/core/config"
 	"FICSIT-Ordis/internal/core/modules/base"
 	"FICSIT-Ordis/internal/core/ports/repos"
-	"FICSIT-Ordis/internal/core/ports/repos/arango"
-	"FICSIT-Ordis/internal/core/ports/repos/memrepo"
+	"FICSIT-Ordis/internal/core/ports/repos/translators"
 	"fmt"
 )
 
-func New(conf config.CommandsConfig) (*Module, error) {
-	repo, err := newRepo(conf)
+func New(conf config.CommandsConfig, repo repos.Repository) (*Module, error) {
+	collection, err := repo.GetCollection("Commands")
 	if err != nil {
-		return nil, fmt.Errorf("could not create a repository: %w", err)
+		return nil, fmt.Errorf("could not get the collection: %w", err)
 	}
+	translator := translators.Wrap[Command](collection)
 	return &Module{
-		*base.New[Command](repo),
+		*base.New[Command](translator),
 	}, nil
 }
 
@@ -35,21 +35,4 @@ func (elem Command) ID() string {
 
 type Module struct {
 	base.BasicModule[Command]
-}
-
-type Repo repos.UntypedCollection[Command]
-
-func newRepo(conf config.CommandsConfig) (Repo, error) {
-	if conf.Persistent {
-		return newPersistentRepo(conf)
-	}
-	return newMemRepo(), nil
-}
-
-func newPersistentRepo(conf config.CommandsConfig) (Repo, error) {
-	return arango.New[Command](conf.Arango, "Commands")
-}
-
-func newMemRepo() Repo {
-	return memrepo.New[Command]()
 }

@@ -1,18 +1,18 @@
 package config
 
 type OrdisConfig struct {
+	Arango   ArangoConfig
 	Commands CommandsConfig
 }
 
 type CommandsConfig struct {
-	Persistent bool
-	Arango     ArangoConfig
 }
 
 type ArangoConfig struct {
 	Username,
 	Password,
-	RootPassword,
+	SuperUsername,
+	SuperPassword,
 	DBName string
 	Endpoints []string
 }
