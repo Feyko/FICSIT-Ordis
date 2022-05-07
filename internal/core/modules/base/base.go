@@ -11,7 +11,7 @@ import (
 
 func newDefault[S id.IDer]() *BasicModule[S] {
 	repo := memrepo.New()
-	collection, err := repo.NewCollection(fmt.Sprintf("%T", *new(S)))
+	collection, err := repo.GetCollection(fmt.Sprintf("%T", *new(S)))
 	if err != nil {
 		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
 	}

@@ -17,20 +17,16 @@ type Repository struct {
 	collections map[string]repos.UntypedCollection
 }
 
-func (r *Repository) NewCollection(name string) (repos.UntypedCollection, error) {
-	_, err := r.GetCollection(name)
-	if err == nil {
-		return nil, fmt.Errorf("collection '%v' already exists", name)
-	}
+func (r *Repository) newCollection(name string) (repos.UntypedCollection, error) {
 	collection := newCollection()
 	r.collections[name] = collection
 	return collection, nil
 }
 
 func (r Repository) GetCollection(name string) (repos.UntypedCollection, error) {
-	collection := r.collections[name]
-	if collection == nil {
-		return nil, fmt.Errorf("collection '%v' doesn't exist", name)
+	collection, ok := r.collections[name]
+	if !ok {
+		collection, _ = r.newCollection(name)
 	}
 	return collection, nil
 }

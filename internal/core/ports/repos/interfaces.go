@@ -3,7 +3,6 @@ package repos
 import "FICSIT-Ordis/internal/id"
 
 type Repository interface {
-	NewCollection(name string) (UntypedCollection, error)
 	GetCollection(name string) (UntypedCollection, error)
 }
 

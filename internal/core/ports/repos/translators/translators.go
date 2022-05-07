@@ -4,6 +4,7 @@ import (
 	"FICSIT-Ordis/internal/core/ports/repos"
 	"FICSIT-Ordis/internal/id"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 )
 
 func Wrap[E id.IDer](c repos.UntypedCollection) repos.TypedCollection[E] {
@@ -21,9 +22,9 @@ func (t Translator[E]) Get(ID string) (E, error) {
 	if err != nil {
 		return *new(E), err
 	}
-	typed, ok := v.(E)
-	if !ok {
-		return *new(E), fmt.Errorf("could not translate, expected type '%T' and got a value of type '%T'", typed, v)
+	typed, err := retype[E](v)
+	if err != nil {
+		return typed, fmt.Errorf("could not translate the result: %w", err)
 	}
 	return typed, nil
 }
@@ -64,15 +65,28 @@ func (t Translator[E]) Delete(ID string) error {
 	return t.c.Delete(ID)
 }
 
+func retype[T any](v any) (T, error) {
+	typed, ok := v.(T)
+	if ok {
+		return typed, nil
+	}
+	var r T
+	err := mapstructure.Decode(v, &r)
+	if err != nil {
+		return *new(T), fmt.Errorf("could not decode into the struct: %w", err)
+	}
+	return r, nil
+}
+
 // This can result in quite a bit of "wasted" computation.
 // But hopefully Search should result in short slices that don't take a lot of computation and GetAll should be used sparsly
 func assertSliceTypes[E id.IDer](s []id.IDer) ([]E, error) {
 	r := make([]E, len(s))
 	for i := 0; i < len(s); i++ {
 		elem := s[i]
-		typed, ok := elem.(E)
-		if !ok {
-			return nil, fmt.Errorf("element %v was of type '%T' which is not the expected '%T' type", i, elem, typed)
+		typed, err := retype[E](elem)
+		if err != nil {
+			return nil, err
 		}
 		r[i] = typed
 	}
