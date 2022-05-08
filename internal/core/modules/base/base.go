@@ -57,6 +57,14 @@ func (mod *BasicModule[S]) List() ([]S, error) {
 	return elems, nil
 }
 
+func (mod *BasicModule[S]) Search(search string, fields []string) ([]S, error) {
+	elems, err := mod.Collection.Search(search, fields)
+	if err != nil {
+		return nil, fmt.Errorf("could not search the elements: %w", err)
+	}
+	return elems, nil
+}
+
 func (mod *BasicModule[S]) Delete(name string) error {
 	err := mod.Collection.Delete(name)
 	if err != nil {

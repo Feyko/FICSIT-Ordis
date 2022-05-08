@@ -2,6 +2,7 @@ package memrepo
 
 import (
 	"FICSIT-Ordis/internal/core/ports/repos"
+	"FICSIT-Ordis/internal/core/ports/repos/translators"
 	"FICSIT-Ordis/internal/id"
 	"errors"
 	"fmt"
@@ -39,7 +40,7 @@ type Collection struct {
 	elements []id.IDer
 }
 
-func (repo *Collection) Get(ID string) (id.IDer, error) {
+func (repo *Collection) Get(ID string) (any, error) {
 	elem, _, err := repo.findWithIndex(ID)
 	return elem, err
 }
@@ -53,15 +54,17 @@ func (repo *Collection) findWithIndex(ID string) (id.IDer, int, error) {
 	return *new(id.IDer), 0, fmt.Errorf("element with ID '%v' does not exist", ID)
 }
 
-func (repo *Collection) GetAll() ([]id.IDer, error) {
-	r := make([]id.IDer, len(repo.elements))
-	copy(r, repo.elements)
+func (repo *Collection) GetAll() ([]any, error) {
+	r, err := translators.RetypeSlice[any](repo.elements)
+	if err != nil {
+		return nil, fmt.Errorf("could not retype the inner slice: %w", err)
+	}
 	return r, nil
 }
 
 //Terrible code. Need to refactor this asap
-func (repo *Collection) Search(search string, fields []string) ([]id.IDer, error) {
-	var r []id.IDer
+func (repo *Collection) Search(search string, fields []string) ([]any, error) {
+	var r []any
 	for _, e := range repo.elements {
 		reflected := reflect.ValueOf(e)
 		if reflected.Kind() != reflect.Struct {

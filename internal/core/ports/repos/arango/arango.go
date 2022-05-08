@@ -4,9 +4,11 @@ import (
 	"FICSIT-Ordis/internal/core/config"
 	"FICSIT-Ordis/internal/core/ports/repos"
 	"FICSIT-Ordis/internal/id"
+	"context"
 	"fmt"
 	"github.com/arangodb/go-driver"
 	"github.com/arangodb/go-driver/http"
+	"strings"
 )
 
 type Repository struct {
@@ -81,7 +83,6 @@ func superInit(conn driver.Connection, conf config.ArangoConfig) error {
 	if driver.IsUnauthorized(err) {
 		return fmt.Errorf("invalid credentials for superuser '%v'", conf.SuperUsername)
 	}
-
 	if driver.IsForbidden(err) {
 		return fmt.Errorf("superuser '%v' has insufficient permissions to create a new database", conf.SuperUsername)
 	}
@@ -94,20 +95,20 @@ func superInit(conn driver.Connection, conf config.ArangoConfig) error {
 func (r Repository) GetCollection(name string) (repos.UntypedCollection, error) {
 	collection, err := getCollectionSafe(r.db, name)
 	if err != nil {
-		return nil, fmt.Errorf("could not get the collection '%v': %w", name, err)
+		return nil, fmt.Errorf("could not get the c '%v': %w", name, err)
 	}
-	return newCollection(collection), nil
+	return newCollection(collection, r.db), nil
 }
 
 func getCollectionSafe(db driver.Database, collectionName string) (driver.Collection, error) {
 	err := ensureCollectionExists(db, collectionName)
 	if err != nil {
-		return nil, fmt.Errorf("could not ensure the collection '%v' exists: %w", err)
+		return nil, fmt.Errorf("could not ensure the c '%v' exists: %w", err)
 	}
 
 	collection, err := db.Collection(nil, collectionName)
 	if err != nil {
-		return nil, fmt.Errorf("could not get the collection '%v': %w", collection, err)
+		return nil, fmt.Errorf("could not get the c '%v': %w", collection, err)
 	}
 	return collection, nil
 }
@@ -120,47 +121,111 @@ func ensureCollectionExists(db driver.Database, collectionName string) error {
 	}
 	_, err = db.CreateCollection(nil, collectionName, nil)
 	if err != nil {
-		return fmt.Errorf("could not create the collection '%v': %w", collectionName, err)
+		return fmt.Errorf("could not create the c '%v': %w", collectionName, err)
 	}
 	return nil
 }
 
 type Collection struct {
-	collection driver.Collection
+	c  driver.Collection
+	db driver.Database
 }
 
-func newCollection(collection driver.Collection) Collection {
+func newCollection(collection driver.Collection, db driver.Database) Collection {
 	return Collection{
-		collection: collection,
+		c:  collection,
+		db: db,
 	}
 }
 
-func (r Collection) Get(ID string) (id.IDer, error) {
-	//TODO implement me
-	panic("implement me")
+func (c Collection) Get(ID string) (any, error) {
+	var r map[string]any
+	_, err := c.c.ReadDocument(nil, ID, &r)
+	if err != nil {
+		return nil, fmt.Errorf("could not read the document: %w", err)
+	}
+	return r, nil
 }
 
-func (r Collection) GetAll() ([]id.IDer, error) {
-	//TODO implement me
-	panic("implement me")
+func (c Collection) GetAll() ([]any, error) {
+	return runQueryInCollection(c, "return doc", nil)
 }
 
-func (r Collection) Create(element id.IDer) error {
-	//TODO implement me
-	panic("implement me")
+func (c Collection) Create(element id.IDer) error {
+	asMap, err := id.ToMap(element, "_key")
+	if err != nil {
+		return err
+	}
+	_, err = c.c.CreateDocument(nil, asMap)
+
+	if err != nil {
+		return fmt.Errorf("could not create the document: %w", err)
+	}
+	return nil
 }
 
-func (r Collection) Update(ID string, newElement id.IDer) error {
-	//TODO implement me
-	panic("implement me")
+func (c Collection) Update(ID string, newElement id.IDer) error {
+	// We remove them recreate the document to make sure the _key and the ID of our value are synced
+	_, err := c.c.RemoveDocument(nil, ID)
+	if err != nil {
+		return fmt.Errorf("could not delete the old document: %w", err)
+	}
+	asMap, err := id.ToMap(newElement, "_key")
+	if err != nil {
+		return err
+	}
+	_, err = c.c.CreateDocument(nil, asMap)
+	if err != nil {
+		return fmt.Errorf("could not create the new document: %w", err)
+	}
+	return nil
 }
 
-func (r Collection) Delete(ID string) error {
-	//TODO implement me
-	panic("implement me")
+func (c Collection) Delete(ID string) error {
+	_, err := c.c.RemoveDocument(nil, ID)
+	if err != nil {
+		return fmt.Errorf("could not delete the document: %w", err)
+	}
+	return nil
 }
 
-func (r Collection) Search(search string, fields []string) ([]id.IDer, error) {
-	//TODO implement me
-	panic("implement me")
+func (c Collection) Search(search string, fields []string) ([]any, error) {
+	params := map[string]any{}
+
+	filters := make([]string, len(fields))
+	for i, field := range fields {
+		filters[i] = fmt.Sprintf(`doc.%v like "%%%v%%"`, field, search)
+	}
+	query := "\tfilter "
+	query += strings.Join(filters, " || ")
+	query += "\n\treturn doc"
+	return runQueryInCollection(c, query, params)
+}
+
+func runQueryInCollection(coll Collection, query string, params map[string]any) ([]any, error) {
+	if params == nil {
+		params = make(map[string]any)
+	}
+	params["@coll"] = coll.c.Name()
+	ctx := driver.WithQueryCount(context.Background(), true)
+	query = "for doc in @@coll\n" + query
+	cursor, err := coll.db.Query(ctx, query, params)
+	if err != nil {
+		return nil, fmt.Errorf("could not query the database: %w", err)
+	}
+	return flattenCursor(cursor)
+}
+
+func flattenCursor(cursor driver.Cursor) ([]any, error) {
+	defer cursor.Close()
+	count := int(cursor.Count())
+	r := make([]any, count)
+	for i := 0; i < count; i++ {
+		_, err := cursor.ReadDocument(nil, &r[i])
+		if err != nil {
+			return nil, fmt.Errorf("could not read the document: %w", err)
+		}
+	}
+
+	return r, nil
 }

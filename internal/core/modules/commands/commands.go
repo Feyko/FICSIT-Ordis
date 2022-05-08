@@ -20,7 +20,7 @@ func New(conf config.CommandsConfig, repo repos.Repository) (*Module, error) {
 }
 
 type Command struct {
-	Name,
+	Name string
 	Response,
 	Media string
 }

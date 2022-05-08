@@ -34,7 +34,7 @@ func (t Translator[E]) GetAll() ([]E, error) {
 	if err != nil {
 		return nil, err
 	}
-	typed, err := assertSliceTypes[E](v)
+	typed, err := RetypeSlice[E](v)
 	if err != nil {
 		return nil, fmt.Errorf("could not translate: %w", err)
 	}
@@ -46,7 +46,7 @@ func (t Translator[E]) Search(search string, fields []string) ([]E, error) {
 	if err != nil {
 		return nil, err
 	}
-	typed, err := assertSliceTypes[E](v)
+	typed, err := RetypeSlice[E](v)
 	if err != nil {
 		return nil, fmt.Errorf("could not translate: %w", err)
 	}
@@ -80,7 +80,7 @@ func retype[T any](v any) (T, error) {
 
 // This can result in quite a bit of "wasted" computation.
 // But hopefully Search should result in short slices that don't take a lot of computation and GetAll should be used sparsly
-func assertSliceTypes[E id.IDer](s []id.IDer) ([]E, error) {
+func RetypeSlice[E, T any](s []T) ([]E, error) {
 	r := make([]E, len(s))
 	for i := 0; i < len(s); i++ {
 		elem := s[i]

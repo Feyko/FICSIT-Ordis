@@ -7,9 +7,9 @@ type Repository interface {
 }
 
 type UntypedCollection interface {
-	Get(ID string) (id.IDer, error)
-	GetAll() ([]id.IDer, error)
-	Search(search string, fields []string) ([]id.IDer, error)
+	Get(ID string) (any, error)
+	GetAll() ([]any, error)
+	Search(search string, fields []string) ([]any, error)
 
 	Create(element id.IDer) error
 	Update(ID string, newElement id.IDer) error
