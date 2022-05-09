@@ -103,7 +103,7 @@ func (r Repository) GetCollection(name string) (repos.UntypedCollection, error) 
 func getCollectionSafe(db driver.Database, collectionName string) (driver.Collection, error) {
 	err := ensureCollectionExists(db, collectionName)
 	if err != nil {
-		return nil, fmt.Errorf("could not ensure the c '%v' exists: %w", err)
+		return nil, fmt.Errorf("could not ensure the collection '%v' exists: %w", collectionName, err)
 	}
 
 	collection, err := db.Collection(nil, collectionName)
