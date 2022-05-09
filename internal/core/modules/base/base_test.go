@@ -16,22 +16,26 @@ func (elem ExampleElement) ID() string {
 	return elem.Name
 }
 
+func (elem ExampleElement) SearchFields() []string {
+	return []string{"Name", "Response"}
+}
+
 var defaultElement = ExampleElement{
 	Name:     "aya",
 	Response: "bop",
 }
 
-func newModuleWithDefaultCommand(t *testing.T, commands []ExampleElement) *BasicModule[ExampleElement] {
+func newModuleWithDefaultCommand(t *testing.T, commands []ExampleElement) *Module[ExampleElement] {
 	module := newModuleWithCommands(t, commands)
 	createDefaultCommandChecked(t, module)
 	return module
 }
 
-func createDefaultCommandChecked(t *testing.T, mod *BasicModule[ExampleElement]) {
+func createDefaultCommandChecked(t *testing.T, mod *Module[ExampleElement]) {
 	checkedCreate(t, mod, defaultElement)
 }
 
-func newModuleWithCommands(t *testing.T, commands []ExampleElement) *BasicModule[ExampleElement] {
+func newModuleWithCommands(t *testing.T, commands []ExampleElement) *Module[ExampleElement] {
 	module := newDefault[ExampleElement]()
 
 	for _, cmd := range commands {
@@ -41,23 +45,23 @@ func newModuleWithCommands(t *testing.T, commands []ExampleElement) *BasicModule
 	return module
 }
 
-func checkedCreate(t *testing.T, mod *BasicModule[ExampleElement], cmd ExampleElement) {
+func checkedCreate(t *testing.T, mod *Module[ExampleElement], cmd ExampleElement) {
 	err := mod.Create(cmd)
 	require.Nil(t, err, "Error when trying to create an element")
 }
 
-func checkedDelete(t *testing.T, mod *BasicModule[ExampleElement], name string) {
+func checkedDelete(t *testing.T, mod *Module[ExampleElement], name string) {
 	err := mod.Delete(name)
 	require.Nil(t, err, "Error when trying to delete an element")
 }
 
-func checkedGet(t *testing.T, mod *BasicModule[ExampleElement], name string) ExampleElement {
+func checkedGet(t *testing.T, mod *Module[ExampleElement], name string) ExampleElement {
 	cmd, err := mod.Get(name)
 	require.Nil(t, err, "Error when trying to get an element")
 	return cmd
 }
 
-func checkedList(t *testing.T, mod *BasicModule[ExampleElement]) []ExampleElement {
+func checkedList(t *testing.T, mod *Module[ExampleElement]) []ExampleElement {
 	list, err := mod.List()
 	require.Nil(t, err, "Error when trying to list elements")
 	return list

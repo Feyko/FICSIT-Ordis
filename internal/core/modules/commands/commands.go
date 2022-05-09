@@ -15,7 +15,7 @@ func New(conf config.CommandsConfig, repo repos.Repository) (*Module, error) {
 	}
 	translator := translators.Wrap[Command](collection)
 	return &Module{
-		*base.New[Command](translator),
+		*base.NewSearchable[Command](translator),
 	}, nil
 }
 
@@ -25,20 +25,14 @@ type Command struct {
 	Media string
 }
 
-var searchFields = []string{"Name", "Response"}
-
-func (elem Command) Type() string {
-	return "Command"
-}
-
 func (elem Command) ID() string {
 	return elem.Name
 }
 
-type Module struct {
-	base.BasicModule[Command]
+func (elem Command) SearchFields() []string {
+	return []string{"Name", "Response"}
 }
 
-func (m *Module) Search(search string) ([]Command, error) {
-	return m.Collection.Search(search, searchFields)
+type Module struct {
+	base.Searchable[Command]
 }

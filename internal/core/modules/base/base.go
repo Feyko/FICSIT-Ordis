@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func newDefault[S id.IDer]() *BasicModule[S] {
+func newDefault[S id.IDer]() *Module[S] {
 	repo := memrepo.New()
 	collection, err := repo.GetCollection(fmt.Sprintf("%T", *new(S)))
 	if err != nil {
@@ -19,17 +19,17 @@ func newDefault[S id.IDer]() *BasicModule[S] {
 	return New[S](translator)
 }
 
-func New[S id.IDer](collection repos.TypedCollection[S]) *BasicModule[S] {
-	return &BasicModule[S]{
+func New[S id.IDer](collection repos.TypedCollection[S]) *Module[S] {
+	return &Module[S]{
 		Collection: collection,
 	}
 }
 
-type BasicModule[S id.IDer] struct {
+type Module[S id.IDer] struct {
 	Collection repos.TypedCollection[S]
 }
 
-func (mod *BasicModule[S]) Create(cmd S) error {
+func (mod *Module[S]) Create(cmd S) error {
 	_, err := mod.Get(cmd.ID())
 	if err == nil {
 		return fmt.Errorf("element with ID '%v' already exists", cmd.ID())
@@ -41,7 +41,7 @@ func (mod *BasicModule[S]) Create(cmd S) error {
 	return nil
 }
 
-func (mod *BasicModule[S]) Get(id string) (S, error) {
+func (mod *Module[S]) Get(id string) (S, error) {
 	cmd, err := mod.Collection.Get(id)
 	if err != nil {
 		return *new(S), fmt.Errorf("could not get command: %v", err)
@@ -49,7 +49,7 @@ func (mod *BasicModule[S]) Get(id string) (S, error) {
 	return cmd, nil
 }
 
-func (mod *BasicModule[S]) List() ([]S, error) {
+func (mod *Module[S]) List() ([]S, error) {
 	elems, err := mod.Collection.GetAll()
 	if err != nil {
 		return nil, fmt.Errorf("could not get all the elements: %w", err)
@@ -57,7 +57,7 @@ func (mod *BasicModule[S]) List() ([]S, error) {
 	return elems, nil
 }
 
-func (mod *BasicModule[S]) Delete(name string) error {
+func (mod *Module[S]) Delete(name string) error {
 	err := mod.Collection.Delete(name)
 	if err != nil {
 		return fmt.Errorf("could not delete the element: %w", err)
@@ -65,7 +65,7 @@ func (mod *BasicModule[S]) Delete(name string) error {
 	return nil
 }
 
-func (mod *BasicModule[S]) Update(name string, newcmd S) error {
+func (mod *Module[S]) Update(name string, newcmd S) error {
 	err := mod.Collection.Update(name, newcmd)
 	if err != nil {
 		return fmt.Errorf("could not update the element: %w", err)

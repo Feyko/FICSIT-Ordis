@@ -18,3 +18,8 @@ func ToMap(e IDer, IDField string) (map[string]any, error) {
 	mapform[IDField] = e.ID()
 	return mapform, nil
 }
+
+type Searchable interface {
+	IDer
+	SearchFields() []string
+}
