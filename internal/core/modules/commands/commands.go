@@ -20,10 +20,12 @@ func New(conf config.CommandsConfig, repo repos.Repository) (*Module, error) {
 }
 
 type Command struct {
-	Name string
+	Name,
 	Response,
 	Media string
 }
+
+var searchFields = []string{"Name", "Response"}
 
 func (elem Command) Type() string {
 	return "Command"
@@ -35,4 +37,8 @@ func (elem Command) ID() string {
 
 type Module struct {
 	base.BasicModule[Command]
+}
+
+func (m *Module) Search(search string) ([]Command, error) {
+	return m.Collection.Search(search, searchFields)
 }
