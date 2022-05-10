@@ -24,8 +24,7 @@ input CrashUpdate {
 
 type CrashMatch {
     matchedText: String!
-    responseText: String
-    responseMedia: String
+    response: Response!
 }
 
 extend type Query {

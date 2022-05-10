@@ -22,6 +22,7 @@ input CommandUpdate {
 type Query {
     listAllCommands: [Command!]
     findCommand(name: String!): Command
+    tryForCommand(text: String!): Response
 }
 
 type Mutation {

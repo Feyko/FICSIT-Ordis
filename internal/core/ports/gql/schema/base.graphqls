@@ -1,0 +1,4 @@
+type Response {
+    text: String
+    mediaLinks: [String!]!
+}
