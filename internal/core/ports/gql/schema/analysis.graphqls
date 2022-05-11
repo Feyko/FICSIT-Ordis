@@ -8,10 +8,10 @@ type PiracyInformation {
 type AnalysisResult {
     smlVersion: String
     gameVersion: String
-    modList: [String!]!
+    modList: [String!]
     piracyInfo: PiracyInformation
-    isSMLVersionCorrect: Boolean!
-    crashMatches: [CrashMatch!]!
+    isSMLVersionCorrect: Boolean
+    crashMatches: [CrashMatch!]
 }
 
 extend type Query {

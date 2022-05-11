@@ -1,26 +1,23 @@
 type Command {
     name: String!
-    text: String
-    media: String
+    response: Response!
     aliases: [String!]!
 }
 
 input CommandCreation {
     name: String!
-    text: String
-    media: String
-    aliases: [String!]
+    response: ResponseInput!
+    aliases: [String!]!
 }
 
 input CommandUpdate {
     name: String
-    text: String
-    media: String
+    response: ResponseInput
     aliases: [String!]
 }
 
 type Query {
-    listAllCommands: [Command!]
+    listAllCommands: [Command!]!
     findCommand(name: String!): Command
     tryForCommand(text: String!): Response
 }

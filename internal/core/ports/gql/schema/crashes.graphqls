@@ -2,24 +2,21 @@ type Crash {
     name: String!
     description: String!
     regexes: [String!]!
-    text: String
-    media: String
+    response: Response!
 }
 
 input CrashCreation {
     name: String!
     description: String!
     regexes: [String!]!
-    text: String
-    media: String
+    response: ResponseInput!
 }
 
 input CrashUpdate {
     name: String
     description: String
     regexes: [String]
-    text: String
-    media: String
+    response: ResponseInput
 }
 
 type CrashMatch {

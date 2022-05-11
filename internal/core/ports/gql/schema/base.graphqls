@@ -2,3 +2,8 @@ type Response {
     text: String
     mediaLinks: [String!]!
 }
+
+input ResponseInput {
+    text: String
+    mediaLinks: [String!]!
+}

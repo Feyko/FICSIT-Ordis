@@ -1,4 +1,4 @@
-//go:build codegen
+//go:build generate
 
 package gql
 
