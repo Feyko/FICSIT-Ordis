@@ -1,9 +1,9 @@
-package core
+package ordis
 
 import (
-	"FICSIT-Ordis/internal/core/config"
-	"FICSIT-Ordis/internal/core/modules/commands"
-	"FICSIT-Ordis/internal/core/ports/repos/arango"
+	"FICSIT-Ordis/internal/domain/config"
+	"FICSIT-Ordis/internal/domain/modules/commands"
+	"FICSIT-Ordis/internal/ports/repos/arango"
 	"fmt"
 )
 

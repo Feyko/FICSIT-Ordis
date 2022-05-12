@@ -1,9 +1,9 @@
 package memrepo
 
 import (
-	"FICSIT-Ordis/internal/core/ports/repos"
-	"FICSIT-Ordis/internal/core/ports/repos/translators"
 	"FICSIT-Ordis/internal/id"
+	"FICSIT-Ordis/internal/ports/repos"
+	"FICSIT-Ordis/internal/ports/repos/translators"
 	"errors"
 	"fmt"
 	"reflect"

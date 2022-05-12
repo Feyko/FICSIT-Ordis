@@ -1,8 +1,8 @@
 package translators
 
 import (
-	"FICSIT-Ordis/internal/core/ports/repos"
 	"FICSIT-Ordis/internal/id"
+	"FICSIT-Ordis/internal/ports/repos"
 	"fmt"
 	"github.com/mitchellh/mapstructure"
 )

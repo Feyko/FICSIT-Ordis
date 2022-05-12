@@ -1,9 +1,9 @@
 package arango
 
 import (
-	"FICSIT-Ordis/internal/core/config"
-	"FICSIT-Ordis/internal/core/ports/repos"
+	"FICSIT-Ordis/internal/domain/config"
 	"FICSIT-Ordis/internal/id"
+	"FICSIT-Ordis/internal/ports/repos"
 	"context"
 	"fmt"
 	"github.com/arangodb/go-driver"

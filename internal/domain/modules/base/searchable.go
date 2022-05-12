@@ -1,10 +1,10 @@
 package base
 
 import (
-	"FICSIT-Ordis/internal/core/ports/repos"
-	"FICSIT-Ordis/internal/core/ports/repos/memrepo"
-	"FICSIT-Ordis/internal/core/ports/repos/translators"
 	"FICSIT-Ordis/internal/id"
+	"FICSIT-Ordis/internal/ports/repos"
+	"FICSIT-Ordis/internal/ports/repos/memrepo"
+	"FICSIT-Ordis/internal/ports/repos/translators"
 	"fmt"
 	"log"
 )

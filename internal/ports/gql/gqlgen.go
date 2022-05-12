@@ -1,6 +1,6 @@
 //go:build generate
 
-package gql
+package main
 
 import _ "github.com/99designs/gqlgen"
 

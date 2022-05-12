@@ -1,8 +1,8 @@
 package main
 
 import (
-	"FICSIT-Ordis/internal/core/ports/gql/graph"
-	"FICSIT-Ordis/internal/core/ports/gql/graph/generated"
+	"FICSIT-Ordis/internal/ports/gql/graph"
+	"FICSIT-Ordis/internal/ports/gql/graph/generated"
 	"log"
 	"net/http"
 	"os"

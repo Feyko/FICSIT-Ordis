@@ -4,7 +4,7 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
-	"FICSIT-Ordis/internal/core/ports/gql/graph/model"
+	"FICSIT-Ordis/internal/ports/gql/graph/model"
 	"context"
 	"fmt"
 )

@@ -1,11 +1,13 @@
 package graph
 
-import "FICSIT-Ordis/internal/core"
+import (
+	"FICSIT-Ordis/internal/domain/ordis"
+)
 
 // This file will not be regenerated automatically.
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	o *core.Ordis
+	o *ordis.Ordis
 }
