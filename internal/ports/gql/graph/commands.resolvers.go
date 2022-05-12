@@ -4,14 +4,26 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"FICSIT-Ordis/internal/domain"
 	"FICSIT-Ordis/internal/ports/gql/graph/generated"
 	"FICSIT-Ordis/internal/ports/gql/graph/model"
 	"context"
 	"fmt"
 )
 
+func (r *commandResolver) Response(ctx context.Context, obj *model.Command) (*model.Response, error) {
+	resp := model.Response(obj.Response)
+	return &resp, nil
+}
+
 func (r *mutationResolver) CreateCommand(ctx context.Context, command model.CommandCreation) (*model.Command, error) {
-	panic(fmt.Errorf("not implemented"))
+	cmd := domain.Command{
+		Name:     command.Name,
+		Aliases:  command.Aliases,
+		Response: domain.Response(*command.Response),
+	}
+	err := r.o.Commands.Create(cmd)
+	return model.ModelCommand(cmd), err
 }
 
 func (r *mutationResolver) UpdateCommand(ctx context.Context, name string, command model.CommandUpdate) (*model.Command, error) {
@@ -34,11 +46,15 @@ func (r *queryResolver) TryForCommand(ctx context.Context, text string) (*model.
 	panic(fmt.Errorf("not implemented"))
 }
 
+// Command returns generated.CommandResolver implementation.
+func (r *Resolver) Command() generated.CommandResolver { return &commandResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type commandResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
