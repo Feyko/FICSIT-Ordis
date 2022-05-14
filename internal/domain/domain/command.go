@@ -1,10 +1,5 @@
 package domain
 
-type Response struct {
-	Text       string
-	MediaLinks []string
-}
-
 type Command struct {
 	Name     string
 	Aliases  []string

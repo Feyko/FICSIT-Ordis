@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"FICSIT-Ordis/internal/domain"
-	"FICSIT-Ordis/internal/domain/config"
+	"FICSIT-Ordis/internal/config"
+	"FICSIT-Ordis/internal/domain/domain"
 	"FICSIT-Ordis/internal/domain/modules/base"
 	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/translators"
@@ -23,3 +23,12 @@ func New(conf config.CommandsConfig, repo repos.Repository) (*Module, error) {
 type Module struct {
 	base.Searchable[domain.Command]
 }
+
+//func (m *Module) Execute(text string) (domain.Response, error) {
+//	strings.Split(text, " ")
+//	cmd, err := m.Get()
+//}
+//
+//func textToArguments(text string) []string {
+//	quotingRegexp := regexp.MustCompile(`".*"`)
+//}

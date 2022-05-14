@@ -4,50 +4,44 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
-	"FICSIT-Ordis/internal/domain"
+	"FICSIT-Ordis/internal/domain/domain"
 	"FICSIT-Ordis/internal/ports/gql/graph/generated"
 	"FICSIT-Ordis/internal/ports/gql/graph/model"
 	"context"
 	"fmt"
 )
 
-func (r *commandResolver) Response(ctx context.Context, obj *model.Command) (*model.Response, error) {
-	resp := model.Response(obj.Response)
-	return &resp, nil
-}
-
-func (r *mutationResolver) CreateCommand(ctx context.Context, command model.CommandCreation) (*model.Command, error) {
-	cmd := domain.Command{
-		Name:     command.Name,
-		Aliases:  command.Aliases,
-		Response: domain.Response(*command.Response),
-	}
+func (r *mutationResolver) CreateCommand(ctx context.Context, command model.CommandCreation) (*domain.Command, error) {
+	cmd := domain.Command(command)
 	err := r.o.Commands.Create(cmd)
-	return model.ModelCommand(cmd), err
+	return &cmd, err
 }
 
-func (r *mutationResolver) UpdateCommand(ctx context.Context, name string, command model.CommandUpdate) (*model.Command, error) {
+func (r *mutationResolver) UpdateCommand(ctx context.Context, name string, command model.CommandUpdate) (*domain.Command, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *mutationResolver) DeleteCommand(ctx context.Context, name string) (bool, error) {
+	err := r.o.Commands.Delete(name)
+	return err == nil, err
+}
+
+func (r *queryResolver) ListAllCommands(ctx context.Context) ([]domain.Command, error) {
+	return r.o.Commands.List()
+}
+
+func (r *queryResolver) FindCommand(ctx context.Context, name string) (*domain.Command, error) {
+	cmd, err := r.o.Commands.Get(name)
+	return &cmd, err
+}
+
+func (r *queryResolver) ExecuteCommand(ctx context.Context, text string) (*domain.Response, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) ListAllCommands(ctx context.Context) ([]*model.Command, error) {
+func (r *commandCreationResolver) Response(ctx context.Context, obj *model.CommandCreation, data *model.ResponseInput) error {
 	panic(fmt.Errorf("not implemented"))
 }
-
-func (r *queryResolver) FindCommand(ctx context.Context, name string) (*model.Command, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *queryResolver) TryForCommand(ctx context.Context, text string) (*model.Response, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-// Command returns generated.CommandResolver implementation.
-func (r *Resolver) Command() generated.CommandResolver { return &commandResolver{r} }
 
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
@@ -55,6 +49,11 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type commandResolver struct{ *Resolver }
+// CommandCreation returns generated.CommandCreationResolver implementation.
+func (r *Resolver) CommandCreation() generated.CommandCreationResolver {
+	return &commandCreationResolver{r}
+}
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type commandCreationResolver struct{ *Resolver }

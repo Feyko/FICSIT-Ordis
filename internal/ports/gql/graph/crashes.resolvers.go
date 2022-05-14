@@ -21,7 +21,7 @@ func (r *mutationResolver) DeleteCrash(ctx context.Context, name string) (bool, 
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) ListAllCrashes(ctx context.Context) ([]*model.Crash, error) {
+func (r *queryResolver) ListAllCrashes(ctx context.Context) ([]model.Crash, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -29,6 +29,6 @@ func (r *queryResolver) FindCrash(ctx context.Context, name string) (*model.Cras
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) CrashAnalysis(ctx context.Context, text string) ([]*model.CrashMatch, error) {
+func (r *queryResolver) CrashAnalysis(ctx context.Context, text string) ([]model.CrashMatch, error) {
 	panic(fmt.Errorf("not implemented"))
 }

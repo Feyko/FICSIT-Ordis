@@ -1,7 +1,7 @@
 package arango
 
 import (
-	"FICSIT-Ordis/internal/domain/config"
+	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos"
 	"context"

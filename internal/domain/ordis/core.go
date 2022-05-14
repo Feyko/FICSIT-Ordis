@@ -1,7 +1,7 @@
 package ordis
 
 import (
-	"FICSIT-Ordis/internal/domain/config"
+	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/domain/modules/commands"
 	"FICSIT-Ordis/internal/ports/repos/arango"
 	"fmt"
