@@ -36,7 +36,7 @@ func (r *queryResolver) FindCommand(ctx context.Context, name string) (*domain.C
 }
 
 func (r *queryResolver) ExecuteCommand(ctx context.Context, text string) (*domain.Response, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.o.Commands.Execute(text)
 }
 
 func (r *commandCreationResolver) Response(ctx context.Context, obj *model.CommandCreation, data *model.ResponseInput) error {

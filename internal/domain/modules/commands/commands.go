@@ -7,6 +7,7 @@ import (
 	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/translators"
 	"fmt"
+	"github.com/mattn/go-shellwords"
 )
 
 func New(conf config.CommandsConfig, repo repos.Repository) (*Module, error) {
@@ -24,11 +25,14 @@ type Module struct {
 	base.Searchable[domain.Command]
 }
 
-//func (m *Module) Execute(text string) (domain.Response, error) {
-//	strings.Split(text, " ")
-//	cmd, err := m.Get()
-//}
-//
-//func textToArguments(text string) []string {
-//	quotingRegexp := regexp.MustCompile(`".*"`)
-//}
+func (m *Module) Execute(text string) (*domain.Response, error) {
+	args, err := shellwords.Parse(text)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse the input text: %w", err)
+	}
+	cmd, err := m.Get(args[0])
+	if err != nil {
+		return nil, nil
+	}
+	return &cmd.Response, nil
+}

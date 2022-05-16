@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/99designs/gqlgen v0.17.5
 	github.com/arangodb/go-driver v1.3.1
+	github.com/mattn/go-shellwords v1.0.12
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/stretchr/testify v1.7.1
 	github.com/vektah/gqlparser/v2 v2.4.2
