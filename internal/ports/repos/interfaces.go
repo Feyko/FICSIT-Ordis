@@ -12,16 +12,16 @@ type UntypedCollection interface {
 	Search(search string, fields []string) ([]any, error)
 
 	Create(element id.IDer) error
-	Update(ID string, newElement id.IDer) error
+	Update(ID string, updateElement id.IDer) error
 	Delete(ID string) error
 }
 
-type TypedCollection[E id.IDer] interface {
+type TypedCollection[E id.IDer, U id.IDer] interface {
 	Get(ID string) (E, error)
 	GetAll() ([]E, error)
 	Search(search string, fields []string) ([]E, error)
 
 	Create(element E) error
-	Update(ID string, newElement E) error
+	Update(ID string, updateElement U) error
 	Delete(ID string) error
 }

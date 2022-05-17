@@ -1,8 +1,12 @@
 package base
 
 import (
+	"FICSIT-Ordis/internal/ports/repos/memrepo"
+	"FICSIT-Ordis/internal/ports/repos/translators"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"log"
 	"testing"
 )
 
@@ -20,23 +24,48 @@ func (elem ExampleElement) SearchFields() []string {
 	return []string{"Name", "Response"}
 }
 
+type UpdateExampleElement struct {
+	Name,
+	Response,
+	Media *string
+}
+
+func (u UpdateExampleElement) ID() string {
+	if u.Name == nil {
+		return ""
+	}
+	return *u.Name
+}
+
+type ExampleModule Module[ExampleElement, UpdateExampleElement]
+
+func newDefault() *ExampleModule {
+	repo := memrepo.New()
+	collection, err := repo.GetCollection(fmt.Sprintf("%T", *new(E)))
+	if err != nil {
+		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
+	}
+	translator := translators.Wrap[ExampleElement, UpdateExampleElement](collection)
+	return New[ExampleElement, UpdateExampleElement](translator)
+}
+
 var defaultElement = ExampleElement{
 	Name:     "aya",
 	Response: "bop",
 }
 
-func newModuleWithDefaultCommand(t *testing.T, commands []ExampleElement) *Module[ExampleElement] {
+func newModuleWithDefaultCommand(t *testing.T, commands []ExampleElement) *ExampleModule {
 	module := newModuleWithCommands(t, commands)
 	createDefaultCommandChecked(t, module)
 	return module
 }
 
-func createDefaultCommandChecked(t *testing.T, mod *Module[ExampleElement]) {
+func createDefaultCommandChecked(t *testing.T, mod *ExampleModule) {
 	checkedCreate(t, mod, defaultElement)
 }
 
-func newModuleWithCommands(t *testing.T, commands []ExampleElement) *Module[ExampleElement] {
-	module := newDefault[ExampleElement]()
+func newModuleWithCommands(t *testing.T, commands []ExampleElement) *ExampleModule {
+	module := newDefault[ExampleElement, UpdateExampleElement]()
 
 	for _, cmd := range commands {
 		checkedCreate(t, module, cmd)
@@ -45,23 +74,23 @@ func newModuleWithCommands(t *testing.T, commands []ExampleElement) *Module[Exam
 	return module
 }
 
-func checkedCreate(t *testing.T, mod *Module[ExampleElement], cmd ExampleElement) {
+func checkedCreate(t *testing.T, mod *ExampleModule, cmd ExampleElement) {
 	err := mod.Create(cmd)
 	require.Nil(t, err, "Error when trying to create an element")
 }
 
-func checkedDelete(t *testing.T, mod *Module[ExampleElement], name string) {
+func checkedDelete(t *testing.T, mod *ExampleModule, name string) {
 	err := mod.Delete(name)
 	require.Nil(t, err, "Error when trying to delete an element")
 }
 
-func checkedGet(t *testing.T, mod *Module[ExampleElement], name string) ExampleElement {
+func checkedGet(t *testing.T, mod *ExampleModule, name string) ExampleElement {
 	cmd, err := mod.Get(name)
 	require.Nil(t, err, "Error when trying to get an element")
 	return cmd
 }
 
-func checkedList(t *testing.T, mod *Module[ExampleElement]) []ExampleElement {
+func checkedList(t *testing.T, mod *ExampleModule) []ExampleElement {
 	list, err := mod.List()
 	require.Nil(t, err, "Error when trying to list elements")
 	return list
@@ -76,7 +105,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	module := newDefault[ExampleElement]()
+	module := newDefault[ExampleElement, UpdateExampleElement]()
 
 	createDefaultCommandChecked(t, module)
 

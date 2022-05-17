@@ -7,17 +7,17 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func Wrap[E id.IDer](c repos.UntypedCollection) repos.TypedCollection[E] {
-	translator := new(Translator[E])
+func Wrap[E id.IDer, U id.IDer](c repos.UntypedCollection) repos.TypedCollection[E, U] {
+	translator := new(Translator[E, U])
 	translator.c = c
 	return translator
 }
 
-type Translator[E id.IDer] struct {
+type Translator[E id.IDer, U id.IDer] struct {
 	c repos.UntypedCollection
 }
 
-func (t Translator[E]) Get(ID string) (E, error) {
+func (t Translator[E, U]) Get(ID string) (E, error) {
 	v, err := t.c.Get(ID)
 	if err != nil {
 		return *new(E), err
@@ -29,7 +29,7 @@ func (t Translator[E]) Get(ID string) (E, error) {
 	return typed, nil
 }
 
-func (t Translator[E]) GetAll() ([]E, error) {
+func (t Translator[E, U]) GetAll() ([]E, error) {
 	v, err := t.c.GetAll()
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (t Translator[E]) GetAll() ([]E, error) {
 	return typed, nil
 }
 
-func (t Translator[E]) Search(search string, fields []string) ([]E, error) {
+func (t Translator[E, U]) Search(search string, fields []string) ([]E, error) {
 	v, err := t.c.Search(search, fields)
 	if err != nil {
 		return nil, err
@@ -53,15 +53,15 @@ func (t Translator[E]) Search(search string, fields []string) ([]E, error) {
 	return typed, nil
 }
 
-func (t Translator[E]) Create(element E) error {
+func (t Translator[E, U]) Create(element E) error {
 	return t.c.Create(element)
 }
 
-func (t Translator[E]) Update(ID string, newElement E) error {
-	return t.c.Update(ID, newElement)
+func (t Translator[E, U]) Update(ID string, updateElement U) error {
+	return t.c.Update(ID, updateElement)
 }
 
-func (t Translator[E]) Delete(ID string) error {
+func (t Translator[E, U]) Delete(ID string) error {
 	return t.c.Delete(ID)
 }
 

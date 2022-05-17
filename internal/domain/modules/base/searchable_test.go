@@ -7,7 +7,7 @@ import (
 
 type SearchableTestSuite struct {
 	suite.Suite
-	mod *Searchable[ExampleElement]
+	mod *Searchable[ExampleElement, UpdateExampleElement]
 }
 
 func (s *SearchableTestSuite) SafeCreateElement(element ExampleElement) {
@@ -23,7 +23,7 @@ func (s *SearchableTestSuite) SafeCreateElements(elements []ExampleElement) {
 }
 
 func (s *SearchableTestSuite) SetupTest() {
-	mod := newDefaultSearchable[ExampleElement]()
+	mod := newDefaultSearchable[ExampleElement, UpdateExampleElement]()
 	s.mod = mod
 }
 

@@ -6,6 +6,14 @@ type Command struct {
 	Response Response
 }
 
+type CommandUpdate struct {
+	Update
+
+	Name     *string
+	Aliases  []string
+	Response *ResponseUpdate
+}
+
 func (elem Command) ID() string {
 	return elem.Name
 }

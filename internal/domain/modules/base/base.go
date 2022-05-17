@@ -3,53 +3,40 @@ package base
 import (
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos"
-	"FICSIT-Ordis/internal/ports/repos/memrepo"
-	"FICSIT-Ordis/internal/ports/repos/translators"
 	"fmt"
-	"log"
 )
 
-func newDefault[S id.IDer]() *Module[S] {
-	repo := memrepo.New()
-	collection, err := repo.GetCollection(fmt.Sprintf("%T", *new(S)))
-	if err != nil {
-		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
-	}
-	translator := translators.Wrap[S](collection)
-	return New[S](translator)
-}
-
-func New[S id.IDer](collection repos.TypedCollection[S]) *Module[S] {
-	return &Module[S]{
+func New[E id.IDer, U id.IDer](collection repos.TypedCollection[E, U]) *Module[E, U] {
+	return &Module[E, U]{
 		Collection: collection,
 	}
 }
 
-type Module[S id.IDer] struct {
-	Collection repos.TypedCollection[S]
+type Module[E id.IDer, U id.IDer] struct {
+	Collection repos.TypedCollection[E, U]
 }
 
-func (mod *Module[S]) Create(cmd S) error {
-	_, err := mod.Get(cmd.ID())
+func (mod *Module[E, U]) Create(element E) error {
+	_, err := mod.Get(element.ID())
 	if err == nil {
-		return fmt.Errorf("element with ID '%v' already exists", cmd.ID())
+		return fmt.Errorf("element with ID '%v' already exists", element.ID())
 	}
-	err = mod.Collection.Create(cmd)
+	err = mod.Collection.Create(element)
 	if err != nil {
 		return fmt.Errorf("could not create a new element: %w", err)
 	}
 	return nil
 }
 
-func (mod *Module[S]) Get(id string) (S, error) {
-	cmd, err := mod.Collection.Get(id)
+func (mod *Module[E, U]) Get(ID string) (E, error) {
+	cmd, err := mod.Collection.Get(ID)
 	if err != nil {
-		return *new(S), fmt.Errorf("could not get command: %v", err)
+		return *new(E), fmt.Errorf("could not get the command with ID '%v': %v", ID, err)
 	}
 	return cmd, nil
 }
 
-func (mod *Module[S]) List() ([]S, error) {
+func (mod *Module[E, U]) List() ([]E, error) {
 	elems, err := mod.Collection.GetAll()
 	if err != nil {
 		return nil, fmt.Errorf("could not get all the elements: %w", err)
@@ -57,16 +44,16 @@ func (mod *Module[S]) List() ([]S, error) {
 	return elems, nil
 }
 
-func (mod *Module[S]) Delete(name string) error {
-	err := mod.Collection.Delete(name)
+func (mod *Module[E, U]) Delete(ID string) error {
+	err := mod.Collection.Delete(ID)
 	if err != nil {
 		return fmt.Errorf("could not delete the element: %w", err)
 	}
 	return nil
 }
 
-func (mod *Module[S]) Update(name string, newcmd S) error {
-	err := mod.Collection.Update(name, newcmd)
+func (mod *Module[E, U]) Update(ID string, updateElement U) error {
+	err := mod.Collection.Update(ID, updateElement)
 	if err != nil {
 		return fmt.Errorf("could not update the element: %w", err)
 	}

@@ -9,30 +9,30 @@ import (
 	"log"
 )
 
-func newDefaultSearchable[S id.Searchable]() *Searchable[S] {
+func newDefaultSearchable[E id.Searchable, U id.IDer]() *Searchable[E, U] {
 	repo := memrepo.New()
-	collection, err := repo.GetCollection(fmt.Sprintf("%T", *new(S)))
+	collection, err := repo.GetCollection(fmt.Sprintf("%T", *new(E)))
 	if err != nil {
 		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
 	}
-	translator := translators.Wrap[S](collection)
+	translator := translators.Wrap[E, U](collection)
 	return NewSearchable(translator)
 }
 
-func NewSearchable[S id.Searchable](collection repos.TypedCollection[S]) *Searchable[S] {
-	var defaultS S
+func NewSearchable[E id.Searchable, U id.IDer](collection repos.TypedCollection[E, U]) *Searchable[E, U] {
+	var defaultS E
 	base := New(collection)
-	return &Searchable[S]{
+	return &Searchable[E, U]{
 		base,
 		defaultS.SearchFields(),
 	}
 }
 
-type Searchable[S id.Searchable] struct {
-	*Module[S]
+type Searchable[E id.Searchable, U id.IDer] struct {
+	*Module[E, U]
 	searchFields []string
 }
 
-func (s *Searchable[S]) Search(search string) ([]S, error) {
+func (s *Searchable[E, U]) Search(search string) ([]E, error) {
 	return s.Collection.Search(search, s.searchFields)
 }
