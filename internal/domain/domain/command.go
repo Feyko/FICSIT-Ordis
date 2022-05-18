@@ -6,6 +6,14 @@ type Command struct {
 	Response Response
 }
 
+func (elem Command) ID() string {
+	return elem.Name
+}
+
+func (elem Command) SearchFields() []string {
+	return []string{"Name", "Response"}
+}
+
 type CommandUpdate struct {
 	Update
 
@@ -14,10 +22,9 @@ type CommandUpdate struct {
 	Response *ResponseUpdate
 }
 
-func (elem Command) ID() string {
-	return elem.Name
-}
-
-func (elem Command) SearchFields() []string {
-	return []string{"Name", "Response"}
+func (update CommandUpdate) ID() string {
+	if update.Name == nil {
+		return ""
+	}
+	return *update.Name
 }

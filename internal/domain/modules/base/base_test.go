@@ -3,7 +3,6 @@ package base
 import (
 	"FICSIT-Ordis/internal/ports/repos/memrepo"
 	"FICSIT-Ordis/internal/ports/repos/translators"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log"
@@ -37,16 +36,18 @@ func (u UpdateExampleElement) ID() string {
 	return *u.Name
 }
 
-type ExampleModule Module[ExampleElement, UpdateExampleElement]
+type ExampleModule struct {
+	Module[ExampleElement, UpdateExampleElement]
+}
 
 func newDefault() *ExampleModule {
 	repo := memrepo.New()
-	collection, err := repo.GetCollection(fmt.Sprintf("%T", *new(E)))
+	collection, err := repo.GetCollection("Example")
 	if err != nil {
 		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
 	}
 	translator := translators.Wrap[ExampleElement, UpdateExampleElement](collection)
-	return New[ExampleElement, UpdateExampleElement](translator)
+	return &ExampleModule{*New[ExampleElement, UpdateExampleElement](translator)}
 }
 
 var defaultElement = ExampleElement{
@@ -65,7 +66,7 @@ func createDefaultCommandChecked(t *testing.T, mod *ExampleModule) {
 }
 
 func newModuleWithCommands(t *testing.T, commands []ExampleElement) *ExampleModule {
-	module := newDefault[ExampleElement, UpdateExampleElement]()
+	module := newDefault()
 
 	for _, cmd := range commands {
 		checkedCreate(t, module, cmd)
@@ -105,7 +106,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	module := newDefault[ExampleElement, UpdateExampleElement]()
+	module := newDefault()
 
 	createDefaultCommandChecked(t, module)
 
@@ -127,7 +128,7 @@ func TestList(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		module := newDefault[ExampleElement]()
+		module := newDefault()
 
 		for _, cmd := range test {
 			checkedCreate(t, module, cmd)
@@ -149,7 +150,7 @@ func TestList(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	module := newDefault[ExampleElement]()
+	module := newDefault()
 
 	createDefaultCommandChecked(t, module)
 
@@ -161,18 +162,20 @@ func TestDelete(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	module := newDefault[ExampleElement]()
+	module := newDefault()
 
-	newcmd := defaultElement
-	newcmd.Name = "new"
+	expected := ExampleElement{Name: defaultElement.Name, Response: "newResponse"}
+
+	newResponse := "newResponse"
+	updateElement := UpdateExampleElement{Name: &newResponse}
 
 	createDefaultCommandChecked(t, module)
 
-	err := module.Update(defaultElement.Name, newcmd)
+	err := module.Update(defaultElement.Name, updateElement)
 
 	assert.Nil(t, err, "Error when trying to update an element")
 
-	cmd := checkedGet(t, module, newcmd.Name)
+	cmd := checkedGet(t, module, newResponse)
 
-	assert.Equal(t, newcmd, cmd, "ExampleElement was not updated")
+	assert.Equal(t, expected, cmd, "ExampleElement was not updated")
 }

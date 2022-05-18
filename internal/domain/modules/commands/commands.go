@@ -15,14 +15,14 @@ func New(conf config.CommandsConfig, repo repos.Repository) (*Module, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not get the collection: %w", err)
 	}
-	translator := translators.Wrap[domain.Command](collection)
+	translator := translators.Wrap[domain.Command, domain.CommandUpdate](collection)
 	return &Module{
-		*base.NewSearchable[domain.Command](translator),
+		*base.NewSearchable[domain.Command, domain.CommandUpdate](translator),
 	}, nil
 }
 
 type Module struct {
-	base.Searchable[domain.Command]
+	base.Searchable[domain.Command, domain.CommandUpdate]
 }
 
 func (m *Module) Execute(text string) (*domain.Response, error) {
