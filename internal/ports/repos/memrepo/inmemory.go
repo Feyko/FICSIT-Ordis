@@ -4,8 +4,8 @@ import (
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/translators"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"reflect"
 	"strings"
 )
@@ -99,13 +99,19 @@ func (repo *Collection) Create(element id.IDer) error {
 	return nil
 }
 
-func (repo *Collection) Update(ID string, newElement id.IDer) error {
-	_, i, err := repo.findWithIndex(ID)
+func (repo *Collection) Update(ID string, updateElement id.IDer) error {
+	current, err := repo.Get(ID)
+	if err != nil {
+		return errors.Wrap(err, "could not get the element")
+	}
+	asMap, err := id.ToMap(current.(id.IDer), "id")
 	if err != nil {
 		return err
 	}
-	repo.elements[i] = newElement
-	return nil
+	err = id.Update(asMap, updateElement)
+	if err != nil {
+		return err
+	}
 }
 
 func (repo *Collection) Delete(ID string) error {

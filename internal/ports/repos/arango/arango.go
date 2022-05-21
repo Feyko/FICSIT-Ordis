@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/arangodb/go-driver"
 	"github.com/arangodb/go-driver/http"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -164,19 +165,26 @@ func (c Collection) Create(element id.IDer) error {
 	return nil
 }
 
-func (c Collection) Update(ID string, newElement id.IDer) error {
+func (c Collection) Update(ID string, updateElement id.IDer) error {
 	// We remove them recreate the document to make sure the _key and the ID of our value are synced
-	_, err := c.c.RemoveDocument(nil, ID)
-	if err != nil {
-		return fmt.Errorf("could not delete the old document: %w", err)
-	}
-	asMap, err := id.ToMap(newElement, "_key")
-	if err != nil {
-		return err
-	}
-	_, err = c.c.CreateDocument(nil, asMap)
-	if err != nil {
-		return fmt.Errorf("could not create the new document: %w", err)
+	if ID == updateElement.ID() {
+		var current map[string]any
+		_, err := c.c.ReadDocument(nil, ID, current)
+		if err != nil {
+			return errors.Wrap(err, "could not get the document")
+		}
+		_, err = c.c.RemoveDocument(nil, ID)
+		if err != nil {
+			return fmt.Errorf("could not delete the old document: %w", err)
+		}
+		asMap, err := id.ToMap(updateElement, "_key")
+		if err != nil {
+			return err
+		}
+		_, err = c.c.CreateDocument(nil, asMap)
+		if err != nil {
+			return fmt.Errorf("could not create the new document: %w", err)
+		}
 	}
 	return nil
 }
