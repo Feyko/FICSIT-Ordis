@@ -21,11 +21,12 @@ func ToMap(e IDer, IDField string) (map[string]any, error) {
 	return mapform, nil
 }
 
-func Update(elem map[string]any, update IDer) error {
+func Update(elem any, update IDer) error {
 	v := reflect.ValueOf(update)
 	t := reflect.TypeOf(update)
-	if v.Kind() != reflect.Struct {
-		return errors.New("update object must be a struct")
+	elemV := reflect.ValueOf(elem).Elem().Elem()
+	if v.Kind() != reflect.Struct /* || elemV.Kind() != reflect.Struct */ {
+		return errors.New("inputs must be structs")
 	}
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
@@ -37,7 +38,8 @@ func Update(elem map[string]any, update IDer) error {
 		if field.Kind() == reflect.Pointer {
 			field = field.Elem()
 		}
-		elem[fieldInfo.Name] = field.Interface()
+		elemField := elemV.FieldByName(fieldInfo.Name)
+		elemField.SetString(field.String())
 	}
 	return nil
 }

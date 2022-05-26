@@ -104,14 +104,12 @@ func (repo *Collection) Update(ID string, updateElement id.IDer) error {
 	if err != nil {
 		return errors.Wrap(err, "could not get the element")
 	}
-	asMap, err := id.ToMap(current.(id.IDer), "id")
+	err = id.Update(&current, updateElement)
 	if err != nil {
 		return err
 	}
-	err = id.Update(asMap, updateElement)
-	if err != nil {
-		return err
-	}
+
+	return nil
 }
 
 func (repo *Collection) Delete(ID string) error {
