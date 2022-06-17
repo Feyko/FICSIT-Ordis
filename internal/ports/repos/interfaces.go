@@ -22,6 +22,11 @@ type TypedCollection[E id.IDer, U id.IDer] interface {
 	Search(search string, fields []string) ([]E, error)
 
 	Create(element E) error
-	Update(ID string, updateElement U) error
+	Update(ID string, updateElement Updater[U]) error
 	Delete(ID string) error
+}
+
+type Updater[T id.IDer] interface {
+	id.IDer
+	Update(update T) Updater[T]
 }
