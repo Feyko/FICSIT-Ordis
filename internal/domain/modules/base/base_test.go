@@ -1,8 +1,8 @@
 package base
 
 import (
+	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/memrepo"
-	"FICSIT-Ordis/internal/ports/repos/translators"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"log"
@@ -37,17 +37,16 @@ func (u UpdateExampleElement) ID() string {
 }
 
 type ExampleModule struct {
-	Module[ExampleElement, UpdateExampleElement]
+	Module[ExampleElement]
 }
 
 func newDefault() *ExampleModule {
 	repo := memrepo.New()
-	collection, err := repo.GetCollection("Example")
+	collection, err := repos.GetCollection(&repo, "Example")
 	if err != nil {
 		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
 	}
-	translator := translators.Wrap[ExampleElement, UpdateExampleElement](collection)
-	return &ExampleModule{*New[ExampleElement, UpdateExampleElement](translator)}
+	return &ExampleModule{*New[ExampleElement](collection)}
 }
 
 var defaultElement = ExampleElement{

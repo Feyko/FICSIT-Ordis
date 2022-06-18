@@ -6,17 +6,17 @@ import (
 	"fmt"
 )
 
-func New[E id.IDer, U id.IDer](collection repos.TypedCollection[E, U]) *Module[E, U] {
-	return &Module[E, U]{
+func New[E id.IDer](collection repos.TypedCollection[E]) *Module[E] {
+	return &Module[E]{
 		Collection: collection,
 	}
 }
 
-type Module[E id.IDer, U id.IDer] struct {
-	Collection repos.TypedCollection[E, U]
+type Module[E id.IDer] struct {
+	Collection repos.TypedCollection[E]
 }
 
-func (mod *Module[E, U]) Create(element E) error {
+func (mod *Module[E]) Create(element E) error {
 	_, err := mod.Get(element.ID())
 	if err == nil {
 		return fmt.Errorf("element with ID '%v' already exists", element.ID())
@@ -28,7 +28,7 @@ func (mod *Module[E, U]) Create(element E) error {
 	return nil
 }
 
-func (mod *Module[E, U]) Get(ID string) (E, error) {
+func (mod *Module[E]) Get(ID string) (E, error) {
 	cmd, err := mod.Collection.Get(ID)
 	if err != nil {
 		return *new(E), fmt.Errorf("could not get the command with ID '%v': %v", ID, err)
@@ -36,7 +36,7 @@ func (mod *Module[E, U]) Get(ID string) (E, error) {
 	return cmd, nil
 }
 
-func (mod *Module[E, U]) List() ([]E, error) {
+func (mod *Module[E]) List() ([]E, error) {
 	elems, err := mod.Collection.GetAll()
 	if err != nil {
 		return nil, fmt.Errorf("could not get all the elements: %w", err)
@@ -44,7 +44,7 @@ func (mod *Module[E, U]) List() ([]E, error) {
 	return elems, nil
 }
 
-func (mod *Module[E, U]) Delete(ID string) error {
+func (mod *Module[E]) Delete(ID string) error {
 	err := mod.Collection.Delete(ID)
 	if err != nil {
 		return fmt.Errorf("could not delete the element: %w", err)
@@ -52,7 +52,7 @@ func (mod *Module[E, U]) Delete(ID string) error {
 	return nil
 }
 
-func (mod *Module[E, U]) Update(ID string, updateElement U) error {
+func (mod *Module[E]) Update(ID string, updateElement repos.Updater[E]) error {
 	err := mod.Collection.Update(ID, updateElement)
 	if err != nil {
 		return fmt.Errorf("could not update the element: %w", err)

@@ -3,68 +3,64 @@ package memrepo
 import (
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos"
-	"FICSIT-Ordis/internal/ports/repos/translators"
 	"fmt"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 	"reflect"
 	"strings"
 )
 
 func New() Repository {
-	return Repository{make(map[string]repos.UntypedCollection)}
+	return Repository{make(map[string]any)}
 }
 
 type Repository struct {
-	collections map[string]repos.UntypedCollection
+	collections map[string]any
 }
 
-func (r *Repository) newCollection(name string) (repos.UntypedCollection, error) {
-	collection := newCollection()
-	r.collections[name] = collection
+func NewCollection[T id.IDer](repo *Repository, name string) (repos.TypedCollection[T], error) {
+	collection := newCollection[T]()
+	repo.collections[name] = collection
 	return collection, nil
 }
 
-func (r Repository) GetCollection(name string) (repos.UntypedCollection, error) {
+func (r Repository) GetCollection(name string) (any, error) {
 	collection, ok := r.collections[name]
 	if !ok {
-		collection, _ = r.newCollection(name)
+		return nil, errors.New("collection not found")
 	}
 	return collection, nil
 }
 
-func newCollection() *Collection {
-	return new(Collection)
+func newCollection[T id.IDer]() *Collection[T] {
+	return new(Collection[T])
 }
 
-type Collection struct {
-	elements []id.IDer
+type Collection[T id.IDer] struct {
+	elements []T
 }
 
-func (repo *Collection) Get(ID string) (any, error) {
+func (repo *Collection[T]) Get(ID string) (T, error) {
 	elem, _, err := repo.findWithIndex(ID)
 	return elem, err
 }
 
-func (repo *Collection) findWithIndex(ID string) (id.IDer, int, error) {
+func (repo *Collection[T]) findWithIndex(ID string) (T, int, error) {
 	for i, elem := range repo.elements {
 		if elem.ID() == ID {
 			return elem, i, nil
 		}
 	}
-	return *new(id.IDer), 0, fmt.Errorf("element with ID '%v' does not exist", ID)
+	return *new(T), 0, fmt.Errorf("element with ID '%v' does not exist", ID)
 }
 
-func (repo *Collection) GetAll() ([]any, error) {
-	r, err := translators.RetypeSlice[any](repo.elements)
-	if err != nil {
-		return nil, fmt.Errorf("could not retype the inner slice: %w", err)
-	}
-	return r, nil
+func (repo *Collection[T]) GetAll() ([]T, error) {
+	return slices.Clone(repo.elements), nil
 }
 
 //Terrible code. Need to refactor this asap
-func (repo *Collection) Search(search string, fields []string) ([]any, error) {
-	var r []any
+func (repo *Collection[T]) Search(search string, fields []string) ([]T, error) {
+	var r []T
 	for _, e := range repo.elements {
 		reflected := reflect.ValueOf(e)
 		if reflected.Kind() != reflect.Struct {
@@ -90,7 +86,7 @@ func (repo *Collection) Search(search string, fields []string) ([]any, error) {
 	return r, nil
 }
 
-func (repo *Collection) Create(element id.IDer) error {
+func (repo *Collection[T]) Create(element T) error {
 	_, err := repo.Get(element.ID())
 	if err == nil {
 		return fmt.Errorf("element with ID '%v' already exists", element.ID())
@@ -99,7 +95,7 @@ func (repo *Collection) Create(element id.IDer) error {
 	return nil
 }
 
-func (repo *Collection) Update(ID string, updateElement id.IDer) error {
+func (repo *Collection[T]) Update(ID string, updateElement repos.Updater[T]) error {
 	current, err := repo.Get(ID)
 	if err != nil {
 		return errors.Wrap(err, "could not get the element")
@@ -112,7 +108,7 @@ func (repo *Collection) Update(ID string, updateElement id.IDer) error {
 	return nil
 }
 
-func (repo *Collection) Delete(ID string) error {
+func (repo *Collection[T]) Delete(ID string) error {
 	_, i, err := repo.findWithIndex(ID)
 	if err != nil {
 		return err
@@ -121,7 +117,7 @@ func (repo *Collection) Delete(ID string) error {
 	return nil
 }
 
-func removeIndex(s []id.IDer, i int) []id.IDer {
+func removeIndex[T id.IDer](s []T, i int) []T {
 	s[i] = s[len(s)-1]
 	return s[:len(s)-1]
 }
