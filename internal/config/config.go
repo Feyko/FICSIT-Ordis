@@ -5,8 +5,7 @@ type OrdisConfig struct {
 	Commands CommandsConfig
 }
 
-type CommandsConfig struct {
-}
+type CommandsConfig struct{}
 
 type ArangoConfig struct {
 	Username,

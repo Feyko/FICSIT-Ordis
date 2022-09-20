@@ -2,7 +2,7 @@ package memrepo
 
 import (
 	"FICSIT-Ordis/internal/id"
-	"FICSIT-Ordis/internal/ports/repos"
+	"FICSIT-Ordis/internal/ports/repos/repo"
 	"fmt"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
@@ -10,30 +10,38 @@ import (
 	"strings"
 )
 
-func New() Repository {
-	return Repository{make(map[string]any)}
+func New() repo.Repository[id.IDer] {
+	return &Repository[id.IDer]{make(map[string]any)}
 }
 
-type Repository struct {
+type Repository[T id.IDer] struct {
 	collections map[string]any
 }
 
-func NewCollection[T id.IDer](repo *Repository, name string) (repos.TypedCollection[T], error) {
-	collection := newCollection[T]()
-	repo.collections[name] = collection
+func (r *Repository[T]) CreateCollection(name string) (any, error) {
+	_, ok := r.collections[name]
+	if ok {
+		return nil, errors.New(fmt.Sprintf("collection '%v' already exists", name))
+	}
+	collection := repo.Collection[T](newCollection[T]())
+	r.collections[name] = collection
 	return collection, nil
 }
 
-func (r Repository) GetCollection(name string) (any, error) {
+func (r *Repository[T]) GetCollection(name string) (any, error) {
 	collection, ok := r.collections[name]
 	if !ok {
 		return nil, errors.New("collection not found")
 	}
-	return collection, nil
+	typed, ok := collection.(repo.Collection[T])
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("collection '%v' does not hold type '%t'", name, *new(T)))
+	}
+	return typed, nil
 }
 
 func newCollection[T id.IDer]() *Collection[T] {
-	return new(Collection[T])
+	return &Collection[T]{elements: make([]T, 0)}
 }
 
 type Collection[T id.IDer] struct {
@@ -95,14 +103,19 @@ func (repo *Collection[T]) Create(element T) error {
 	return nil
 }
 
-func (repo *Collection[T]) Update(ID string, updateElement repos.Updater[T]) error {
+func (repo *Collection[T]) Update(ID string, updateElement id.IDer) error {
 	current, err := repo.Get(ID)
 	if err != nil {
 		return errors.Wrap(err, "could not get the element")
 	}
-	err = id.Update(&current, updateElement)
+	err = repo.Delete(ID)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not delete the element")
+	}
+	updated := updateElement.Update(current)
+	err = repo.Create(updated)
+	if err != nil {
+		return errors.Wrap(err, "could not recreate the element")
 	}
 
 	return nil

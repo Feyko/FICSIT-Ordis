@@ -3,7 +3,6 @@ package arango
 import (
 	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/id"
-	"FICSIT-Ordis/internal/ports/repos"
 	"context"
 	"fmt"
 	"github.com/arangodb/go-driver"
@@ -12,18 +11,29 @@ import (
 	"strings"
 )
 
-type Repository struct {
+type Repository[T id.IDer] struct {
 	client driver.Client
 	db     driver.Database
 }
 
-func New(conf config.ArangoConfig) (*Repository, error) {
-	repo := new(Repository)
+func New[T id.IDer](conf config.ArangoConfig) (*Repository[T], error) {
+	repo := new(Repository[T])
 	client, err := connectClient(conf)
 	if err != nil {
 		return nil, err
 	}
 	db, err := client.Database(nil, conf.DBName)
+	if driver.IsNotFound(err) {
+		db, err = client.CreateDatabase(nil, conf.DBName, &driver.CreateDatabaseOptions{
+			Users: []driver.CreateDatabaseUserOptions{{
+				UserName: conf.Username,
+				Password: conf.Password,
+			}},
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "could not create the database")
+		}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("could not get the database '%v': %w", conf.DBName, err)
 	}
@@ -93,7 +103,7 @@ func superInit(conn driver.Connection, conf config.ArangoConfig) error {
 	return nil
 }
 
-func (r Repository) GetCollection(name string) (repos.UntypedCollection, error) {
+func (r Repository[T]) GetCollection(name string) (any, error) {
 	collection, err := getCollectionSafe(r.db, name)
 	if err != nil {
 		return nil, fmt.Errorf("could not get the c '%v': %w", name, err)
@@ -127,69 +137,52 @@ func ensureCollectionExists(db driver.Database, collectionName string) error {
 	return nil
 }
 
-type Collection struct {
+type Collection[T id.IDer] struct {
 	c  driver.Collection
 	db driver.Database
 }
 
-func newCollection(collection driver.Collection, db driver.Database) Collection {
-	return Collection{
+func newCollection[T id.IDer](collection driver.Collection, db driver.Database) Collection[T] {
+	return Collection[T]{
 		c:  collection,
 		db: db,
 	}
 }
 
-func (c Collection) Get(ID string) (any, error) {
-	var r map[string]any
-	_, err := c.c.ReadDocument(nil, ID, &r)
+func (c Collection[T]) Get(ID string) (T, error) {
+	r := new(T)
+	_, err := c.c.ReadDocument(nil, ID, r)
 	if err != nil {
 		return nil, fmt.Errorf("could not read the document: %w", err)
 	}
-	return r, nil
+	return *r, nil
 }
 
-func (c Collection) GetAll() ([]any, error) {
+func (c Collection[T]) GetAll() ([]T, error) {
 	return runQueryInCollection(c, "return doc", nil)
 }
 
-func (c Collection) Create(element id.IDer) error {
-	asMap, err := id.ToMap(element, "_key")
-	if err != nil {
-		return err
-	}
-	_, err = c.c.CreateDocument(nil, asMap)
-
+func (c Collection[T]) Create(element id.IDer) error {
+	_, err := c.c.CreateDocument(nil, element)
 	if err != nil {
 		return fmt.Errorf("could not create the document: %w", err)
 	}
 	return nil
 }
 
-func (c Collection) Update(ID string, updateElement id.IDer) error {
-	// We remove them recreate the document to make sure the _key and the ID of our value are synced
-	if ID == updateElement.ID() {
-		var current map[string]any
-		_, err := c.c.ReadDocument(nil, ID, current)
-		if err != nil {
-			return errors.Wrap(err, "could not get the document")
-		}
-		_, err = c.c.RemoveDocument(nil, ID)
-		if err != nil {
-			return fmt.Errorf("could not delete the old document: %w", err)
-		}
-		asMap, err := id.ToMap(updateElement, "_key")
-		if err != nil {
-			return err
-		}
-		_, err = c.c.CreateDocument(nil, asMap)
-		if err != nil {
-			return fmt.Errorf("could not create the new document: %w", err)
-		}
+func (c Collection[T]) Update(ID string, updateElement id.IDer) error {
+	if ID != updateElement.ID() {
+		return errors.New("IDs are immutable for now")
 	}
+	_, err := c.c.UpdateDocument(nil, ID, updateElement)
+	if err != nil {
+		return errors.Wrap(err, "")
+	}
+
 	return nil
 }
 
-func (c Collection) Delete(ID string) error {
+func (c Collection[T]) Delete(ID string) error {
 	_, err := c.c.RemoveDocument(nil, ID)
 	if err != nil {
 		return fmt.Errorf("could not delete the document: %w", err)
@@ -197,7 +190,7 @@ func (c Collection) Delete(ID string) error {
 	return nil
 }
 
-func (c Collection) Search(search string, fields []string) ([]any, error) {
+func (c Collection[T]) Search(search string, fields []string) ([]T, error) {
 	params := map[string]any{}
 
 	filters := make([]string, len(fields))
@@ -210,7 +203,7 @@ func (c Collection) Search(search string, fields []string) ([]any, error) {
 	return runQueryInCollection(c, query, params)
 }
 
-func runQueryInCollection(coll Collection, query string, params map[string]any) ([]any, error) {
+func runQueryInCollection[T id.IDer](coll Collection[T], query string, params map[string]any) ([]T, error) {
 	if params == nil {
 		params = make(map[string]any)
 	}
@@ -221,13 +214,13 @@ func runQueryInCollection(coll Collection, query string, params map[string]any) 
 	if err != nil {
 		return nil, fmt.Errorf("could not query the database: %w", err)
 	}
-	return flattenCursor(cursor)
+	return flattenCursor[T](cursor)
 }
 
-func flattenCursor(cursor driver.Cursor) ([]any, error) {
+func flattenCursor[T id.IDer](cursor driver.Cursor) ([]T, error) {
 	defer cursor.Close()
 	count := int(cursor.Count())
-	r := make([]any, count)
+	r := make([]T, count)
 	for i := 0; i < count; i++ {
 		_, err := cursor.ReadDocument(nil, &r[i])
 		if err != nil {

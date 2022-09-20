@@ -2,18 +2,18 @@ package base
 
 import (
 	"FICSIT-Ordis/internal/id"
-	"FICSIT-Ordis/internal/ports/repos"
+	"FICSIT-Ordis/internal/ports/repos/repo"
 	"fmt"
 )
 
-func New[E id.IDer](collection repos.TypedCollection[E]) *Module[E] {
+func New[E id.IDer](collection repo.Collection[E]) *Module[E] {
 	return &Module[E]{
 		Collection: collection,
 	}
 }
 
 type Module[E id.IDer] struct {
-	Collection repos.TypedCollection[E]
+	Collection repo.Collection[E]
 }
 
 func (mod *Module[E]) Create(element E) error {
@@ -52,7 +52,7 @@ func (mod *Module[E]) Delete(ID string) error {
 	return nil
 }
 
-func (mod *Module[E]) Update(ID string, updateElement repos.Updater[E]) error {
+func (mod *Module[E]) Update(ID string, updateElement id.IDer) error {
 	err := mod.Collection.Update(ID, updateElement)
 	if err != nil {
 		return fmt.Errorf("could not update the element: %w", err)

@@ -42,7 +42,7 @@ type ExampleModule struct {
 
 func newDefault() *ExampleModule {
 	repo := memrepo.New()
-	collection, err := repos.GetCollection(&repo, "Example")
+	collection, err := repos.CreateCollection[ExampleElement](repo, "Example")
 	if err != nil {
 		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestUpdate(t *testing.T) {
 	expected := ExampleElement{Name: defaultElement.Name, Response: "newResponse"}
 
 	newResponse := "newResponse"
-	updateElement := UpdateExampleElement{Name: &newResponse}
+	updateElement := UpdateExampleElement{Response: &newResponse}
 
 	createDefaultCommandChecked(t, module)
 
@@ -174,7 +174,7 @@ func TestUpdate(t *testing.T) {
 
 	assert.Nil(t, err, "Error when trying to update an element")
 
-	cmd := checkedGet(t, module, newResponse)
+	cmd := checkedGet(t, module, defaultElement.Name)
 
 	assert.Equal(t, expected, cmd, "ExampleElement was not updated")
 }
