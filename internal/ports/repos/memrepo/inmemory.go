@@ -3,6 +3,7 @@ package memrepo
 import (
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/repo"
+	"FICSIT-Ordis/internal/util"
 	"fmt"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
@@ -104,20 +105,14 @@ func (repo *Collection[T]) Create(element T) error {
 }
 
 func (repo *Collection[T]) Update(ID string, updateElement id.IDer) error {
-	current, err := repo.Get(ID)
+	_, i, err := repo.findWithIndex(ID)
 	if err != nil {
 		return errors.Wrap(err, "could not get the element")
 	}
-	err = repo.Delete(ID)
+	err = util.PatchStruct(&repo.elements[i], updateElement)
 	if err != nil {
-		return errors.Wrap(err, "could not delete the element")
+		return errors.Wrap(err, "could not update the element")
 	}
-	updated := updateElement.Update(current)
-	err = repo.Create(updated)
-	if err != nil {
-		return errors.Wrap(err, "could not recreate the element")
-	}
-
 	return nil
 }
 
