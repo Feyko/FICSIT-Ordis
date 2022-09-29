@@ -8,6 +8,7 @@ import (
 	"github.com/arangodb/go-driver"
 	"github.com/arangodb/go-driver/http"
 	"github.com/pkg/errors"
+	"reflect"
 	"strings"
 )
 
@@ -150,12 +151,19 @@ func newCollection[T id.IDer](collection driver.Collection, db driver.Database) 
 }
 
 func (c Collection[T]) Get(ID string) (T, error) {
-	r := new(T)
-	_, err := c.c.ReadDocument(nil, ID, r)
+	query :=
+		`filter doc.id == @id
+return doc`
+	elements, err := runQueryInCollection(c, query, map[string]interface{}{
+		"id": ID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("could not read the document: %w", err)
 	}
-	return *r, nil
+	if len(elements) == 0 {
+		return nil, errors.Errorf("could not find the element with ID %v", ID)
+	}
+	return elements[0], nil
 }
 
 func (c Collection[T]) GetAll() ([]T, error) {
@@ -171,21 +179,28 @@ func (c Collection[T]) Create(element id.IDer) error {
 }
 
 func (c Collection[T]) Update(ID string, updateElement id.IDer) error {
-	if ID != updateElement.ID() {
-		return errors.New("IDs are immutable for now")
-	}
-	_, err := c.c.UpdateDocument(nil, ID, updateElement)
+	asMap, err := id.ToMapNoOverwrite(updateElement)
 	if err != nil {
-		return errors.Wrap(err, "")
+		return errors.Wrap(err, "could not turn the element into a map")
 	}
-
+	asMap["id"] = ID
+	query := updateQueryForType(updateElement, "coll", "doc")
+	_, err = runQueryInCollection(c, query, asMap)
+	if err != nil {
+		return errors.Wrap(err, "could not update the document")
+	}
 	return nil
 }
 
 func (c Collection[T]) Delete(ID string) error {
-	_, err := c.c.RemoveDocument(nil, ID)
+	query :=
+		`filter doc.id == @id
+remove doc in @@coll`
+	_, err := runQueryInCollection(c, query, map[string]interface{}{
+		"id": ID,
+	})
 	if err != nil {
-		return fmt.Errorf("could not delete the document: %w", err)
+		return errors.Wrap(err, "could not delete the element")
 	}
 	return nil
 }
@@ -229,4 +244,24 @@ func flattenCursor[T id.IDer](cursor driver.Cursor) ([]T, error) {
 	}
 
 	return r, nil
+}
+
+func updateQueryForType[T any](v T, collParam, elemParam string) string {
+	query := fmt.Sprintf("update @@%v with { ", elemParam)
+	t := reflect.TypeOf(v)
+	numField := t.NumField()
+	fieldNames := make([]string, 0, numField)
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+		fieldNames = append(fieldNames, field.Name)
+	}
+	for _, name := range fieldNames {
+		query += fmt.Sprintf("%v: @%v", name, name)
+	}
+	query += fmt.Sprintf(" } in @@%v", collParam)
+	return query
 }
