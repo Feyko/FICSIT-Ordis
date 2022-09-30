@@ -2,10 +2,10 @@ package base
 
 import (
 	"FICSIT-Ordis/internal/ports/repos"
-	"FICSIT-Ordis/internal/ports/repos/memrepo"
+	"FICSIT-Ordis/test"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"log"
 	"testing"
 )
 
@@ -40,13 +40,16 @@ type ExampleModule struct {
 	Module[ExampleElement]
 }
 
-func newDefault() *ExampleModule {
-	repo := memrepo.New()
+func newDefault() (*ExampleModule, error) {
+	repo, err := test.GetRepo()
+	if err != nil {
+		return nil, errors.Wrap(err, "error getting a repo")
+	}
 	collection, err := repos.CreateCollection[ExampleElement](repo, "Example")
 	if err != nil {
-		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
+		return nil, errors.Wrap(err, "could not create a collection")
 	}
-	return &ExampleModule{*New[ExampleElement](collection)}
+	return &ExampleModule{*New[ExampleElement](collection)}, nil
 }
 
 var defaultElement = ExampleElement{
@@ -65,7 +68,8 @@ func createDefaultCommandChecked(t *testing.T, mod *ExampleModule) {
 }
 
 func newModuleWithCommands(t *testing.T, commands []ExampleElement) *ExampleModule {
-	module := newDefault()
+	module, err := newDefault()
+	require.NoError(t, err)
 
 	for _, cmd := range commands {
 		checkedCreate(t, module, cmd)
@@ -105,7 +109,8 @@ func TestCreate(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	module := newDefault()
+	module, err := newDefault()
+	require.NoError(t, err)
 
 	createDefaultCommandChecked(t, module)
 
@@ -127,7 +132,8 @@ func TestList(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		module := newDefault()
+		module, err := newDefault()
+		require.NoError(t, err)
 
 		for _, cmd := range test {
 			checkedCreate(t, module, cmd)
@@ -149,19 +155,21 @@ func TestList(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	module := newDefault()
+	module, err := newDefault()
+	require.NoError(t, err)
 
 	createDefaultCommandChecked(t, module)
 
 	checkedDelete(t, module, defaultElement.Name)
 
-	_, err := module.Get(defaultElement.Name)
+	_, err = module.Get(defaultElement.Name)
 
 	assert.NotNil(t, err, "Successfully retrieved an element that should have been deleted")
 }
 
 func TestUpdate(t *testing.T) {
-	module := newDefault()
+	module, err := newDefault()
+	require.NoError(t, err)
 
 	expected := ExampleElement{Name: defaultElement.Name, Response: "newResponse"}
 
@@ -170,7 +178,7 @@ func TestUpdate(t *testing.T) {
 
 	createDefaultCommandChecked(t, module)
 
-	err := module.Update(defaultElement.Name, updateElement)
+	err = module.Update(defaultElement.Name, updateElement)
 
 	assert.Nil(t, err, "Error when trying to update an element")
 

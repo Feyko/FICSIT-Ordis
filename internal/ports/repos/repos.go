@@ -2,6 +2,7 @@ package repos
 
 import (
 	"FICSIT-Ordis/internal/id"
+	"FICSIT-Ordis/internal/ports/repos/arango"
 	"FICSIT-Ordis/internal/ports/repos/memrepo"
 	"FICSIT-Ordis/internal/ports/repos/repo"
 	"fmt"
@@ -44,6 +45,9 @@ func Retype[newT id.IDer, oldT id.IDer](repo repo.Repository[oldT]) (repo.Reposi
 	switch typed := repo.(type) {
 	case *memrepo.Repository[oldT]:
 		return (*memrepo.Repository[newT])(typed), nil
+	case *arango.Repository[oldT]:
+		return (*arango.Repository[newT])(typed), nil
+
 	default:
 		return nil, errors.New("unsupported repository type")
 	}

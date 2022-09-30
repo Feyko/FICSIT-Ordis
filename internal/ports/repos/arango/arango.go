@@ -104,12 +104,17 @@ func superInit(conn driver.Connection, conf config.ArangoConfig) error {
 	return nil
 }
 
+func (r Repository[T]) CreateCollection(name string) (any, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (r Repository[T]) GetCollection(name string) (any, error) {
 	collection, err := getCollectionSafe(r.db, name)
 	if err != nil {
 		return nil, fmt.Errorf("could not get the c '%v': %w", name, err)
 	}
-	return newCollection(collection, r.db), nil
+	return newCollection[T](collection, r.db), nil
 }
 
 func getCollectionSafe(db driver.Database, collectionName string) (driver.Collection, error) {
@@ -158,10 +163,10 @@ return doc`
 		"id": ID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("could not read the document: %w", err)
+		return *new(T), fmt.Errorf("could not read the document: %w", err)
 	}
 	if len(elements) == 0 {
-		return nil, errors.Errorf("could not find the element with ID %v", ID)
+		return *new(T), errors.Errorf("could not find the element with ID %v", ID)
 	}
 	return elements[0], nil
 }

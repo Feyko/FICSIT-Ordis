@@ -23,7 +23,10 @@ func (s *SearchableTestSuite) SafeCreateElements(elements []ExampleElement) {
 }
 
 func (s *SearchableTestSuite) SetupTest() {
-	mod := newDefaultSearchable[ExampleElement]()
+	mod, err := newDefaultSearchable[ExampleElement]()
+	if err != nil {
+		s.Fail("Error when setting up: %+v", err)
+	}
 	s.mod = mod
 }
 
