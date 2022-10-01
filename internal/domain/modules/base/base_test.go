@@ -1,11 +1,13 @@
 package base
 
 import (
+	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos"
+	"FICSIT-Ordis/internal/ports/repos/repo"
 	"FICSIT-Ordis/test"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	"testing"
 )
 
@@ -40,16 +42,33 @@ type ExampleModule struct {
 	Module[ExampleElement]
 }
 
-func newDefault() (*ExampleModule, error) {
-	repo, err := test.GetRepo()
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting a repo")
-	}
-	collection, err := repos.CreateCollection[ExampleElement](repo, "Example")
-	if err != nil {
-		return nil, errors.Wrap(err, "could not create a collection")
-	}
-	return &ExampleModule{*New[ExampleElement](collection)}, nil
+func TestExampleModuleTestSuite(t *testing.T) {
+	suite.Run(t, new(ExampleModuleTestSuite))
+}
+
+type ExampleModuleTestSuite struct {
+	suite.Suite
+	rep repo.Repository[ExampleElement]
+	mod *ExampleModule
+}
+
+func (s *ExampleModuleTestSuite) SetupSuite() {
+	rep, err := test.GetRepo()
+	s.Require().NoError(err)
+	rep, err = repos.Retype[ExampleElement, id.IDer](rep)
+	s.Require().NoError(err)
+	s.rep = rep
+}
+
+func (s *ExampleModuleTestSuite) SetupTest() {
+	collection, err := repos.CreateCollection[ExampleElement](s.rep, "Example")
+	s.Require().NoError(err)
+	s.mod = &ExampleModule{*New[ExampleElement](collection)}
+}
+
+func (s *ExampleModuleTestSuite) TearDownTest() {
+	err := s.rep.DeleteCollection("Example")
+	s.Require().NoError(err)
 }
 
 var defaultElement = ExampleElement{
@@ -57,69 +76,69 @@ var defaultElement = ExampleElement{
 	Response: "bop",
 }
 
-func newModuleWithDefaultCommand(t *testing.T, commands []ExampleElement) *ExampleModule {
-	module := newModuleWithCommands(t, commands)
-	createDefaultCommandChecked(t, module)
-	return module
-}
+//func newModuleWithDefaultCommand(t *testing.T, commands []ExampleElement) *ExampleModule {
+//	module := newModuleWithCommands(t, commands)
+//	createDefaultCommandChecked(t, module)
+//	return module
+//}
 
 func createDefaultCommandChecked(t *testing.T, mod *ExampleModule) {
 	checkedCreate(t, mod, defaultElement)
 }
 
-func newModuleWithCommands(t *testing.T, commands []ExampleElement) *ExampleModule {
-	module, err := newDefault()
-	require.NoError(t, err)
-
-	for _, cmd := range commands {
-		checkedCreate(t, module, cmd)
-	}
-
-	return module
-}
+//func newModuleWithCommands(t *testing.T, commands []ExampleElement) *ExampleModule {
+//	module, err := newDefault()
+//	require.NoError(t, err)
+//
+//	for _, cmd := range commands {
+//		checkedCreate(t, module, cmd)
+//	}
+//
+//	return module
+//}
 
 func checkedCreate(t *testing.T, mod *ExampleModule, cmd ExampleElement) {
 	err := mod.Create(cmd)
-	require.Nil(t, err, "Error when trying to create an element")
+	require.NoError(t, err)
 }
 
 func checkedDelete(t *testing.T, mod *ExampleModule, name string) {
 	err := mod.Delete(name)
-	require.Nil(t, err, "Error when trying to delete an element")
+	require.NoError(t, err)
 }
 
 func checkedGet(t *testing.T, mod *ExampleModule, name string) ExampleElement {
 	cmd, err := mod.Get(name)
-	require.Nil(t, err, "Error when trying to get an element")
+	require.NoError(t, err)
 	return cmd
 }
 
 func checkedList(t *testing.T, mod *ExampleModule) []ExampleElement {
 	list, err := mod.List()
-	require.Nil(t, err, "Error when trying to list elements")
+	require.NoError(t, err)
 	return list
 }
 
-func TestCreate(t *testing.T) {
-	module := newModuleWithDefaultCommand(t, []ExampleElement{})
+func (s *ExampleModuleTestSuite) TestCreate() {
+	t := s.T()
+	createDefaultCommandChecked(t, s.mod)
 
-	err := module.Create(defaultElement)
+	err := s.mod.Create(defaultElement)
 
-	assert.NotNil(t, err, "Was able to create already existing element")
+	assert.Error(t, err, "Was able to create already existing element")
 }
 
-func TestGet(t *testing.T) {
-	module, err := newDefault()
-	require.NoError(t, err)
+func (s *ExampleModuleTestSuite) TestGet() {
+	t := s.T()
+	createDefaultCommandChecked(t, s.mod)
 
-	createDefaultCommandChecked(t, module)
-
-	cmd := checkedGet(t, module, defaultElement.Name)
+	cmd := checkedGet(t, s.mod, defaultElement.Name)
 
 	assert.Equal(t, defaultElement, cmd, "Retrieved element is not the inserted element")
 }
 
-func TestList(t *testing.T) {
+func (s *ExampleModuleTestSuite) TestList() {
+	t := s.T()
 	tests := [][]ExampleElement{
 		{
 			{Name: "1"},
@@ -132,57 +151,54 @@ func TestList(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		module, err := newDefault()
-		require.NoError(t, err)
-
 		for _, cmd := range test {
-			checkedCreate(t, module, cmd)
+			checkedCreate(t, s.mod, cmd)
 		}
 
-		list := checkedList(t, module)
+		list := checkedList(t, s.mod)
 
 		assert.Equal(t, test, list, "List of elements isn't the same as the list of created elements")
 
 		if len(list) > 0 {
 			list[0].Name = "ThisShouldNotBeAlreadyAName"
 
-			newlist := checkedList(t, module)
+			newlist := checkedList(t, s.mod)
 
 			assert.NotEqual(t, newlist, list,
 				"Modifying the return value of Elements.List modified the internal value of the Elements module")
 		}
+
+		for _, cmd := range test {
+			checkedDelete(t, s.mod, cmd.Name)
+		}
 	}
 }
 
-func TestDelete(t *testing.T) {
-	module, err := newDefault()
-	require.NoError(t, err)
+func (s *ExampleModuleTestSuite) TestDelete() {
+	t := s.T()
+	createDefaultCommandChecked(t, s.mod)
 
-	createDefaultCommandChecked(t, module)
+	checkedDelete(t, s.mod, defaultElement.Name)
 
-	checkedDelete(t, module, defaultElement.Name)
-
-	_, err = module.Get(defaultElement.Name)
+	_, err := s.mod.Get(defaultElement.Name)
 
 	assert.NotNil(t, err, "Successfully retrieved an element that should have been deleted")
 }
 
-func TestUpdate(t *testing.T) {
-	module, err := newDefault()
-	require.NoError(t, err)
-
+func (s *ExampleModuleTestSuite) TestUpdate() {
+	t := s.T()
 	expected := ExampleElement{Name: defaultElement.Name, Response: "newResponse"}
 
 	newResponse := "newResponse"
 	updateElement := UpdateExampleElement{Response: &newResponse}
 
-	createDefaultCommandChecked(t, module)
+	createDefaultCommandChecked(t, s.mod)
 
-	err = module.Update(defaultElement.Name, updateElement)
+	err := s.mod.Update(defaultElement.Name, updateElement)
 
 	assert.Nil(t, err, "Error when trying to update an element")
 
-	cmd := checkedGet(t, module, defaultElement.Name)
+	cmd := checkedGet(t, s.mod, defaultElement.Name)
 
 	assert.Equal(t, expected, cmd, "ExampleElement was not updated")
 }

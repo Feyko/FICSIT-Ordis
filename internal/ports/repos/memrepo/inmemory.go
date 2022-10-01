@@ -36,9 +36,17 @@ func (r *Repository[T]) GetCollection(name string) (any, error) {
 	}
 	typed, ok := collection.(repo.Collection[T])
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("collection '%v' does not hold type '%t'", name, *new(T)))
+		return nil, errors.New(fmt.Sprintf("collection '%v' does not hold type '%T'", name, *new(T)))
 	}
 	return typed, nil
+}
+
+func (r *Repository[T]) DeleteCollection(name string) error {
+	if _, ok := r.collections[name]; !ok {
+		return errors.Errorf("No collection named '%v'", name)
+	}
+	delete(r.collections, name)
+	return nil
 }
 
 func newCollection[T id.IDer]() *Collection[T] {

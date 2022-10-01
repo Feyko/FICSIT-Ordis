@@ -10,6 +10,8 @@ type Repository[T id.IDer] interface {
 
 	// Create a collection that holds values of the current type parameter. Use repos.CreateCollection instead.
 	CreateCollection(name string) (any, error)
+
+	DeleteCollection(name string) error
 }
 
 type Collection[E id.IDer] interface {

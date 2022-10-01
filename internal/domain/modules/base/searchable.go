@@ -7,7 +7,6 @@ import (
 	"FICSIT-Ordis/test"
 	"fmt"
 	"github.com/pkg/errors"
-	"log"
 )
 
 func newDefaultSearchable[E id.Searchable]() (*Searchable[E], error) {
@@ -17,7 +16,7 @@ func newDefaultSearchable[E id.Searchable]() (*Searchable[E], error) {
 	}
 	collection, err := repos.CreateCollection[E](repo, fmt.Sprintf("%T", *new(E)))
 	if err != nil {
-		log.Fatalf("Something went horribly wrong and we could not create a new collection in the memrepo: %v", err)
+		return nil, errors.Wrap(err, "could not create collection")
 	}
 	return NewSearchable(collection), nil
 }

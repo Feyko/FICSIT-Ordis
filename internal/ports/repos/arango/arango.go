@@ -105,40 +105,29 @@ func superInit(conn driver.Connection, conf config.ArangoConfig) error {
 }
 
 func (r Repository[T]) CreateCollection(name string) (any, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r Repository[T]) GetCollection(name string) (any, error) {
-	collection, err := getCollectionSafe(r.db, name)
+	collection, err := r.db.CreateCollection(nil, name, nil)
 	if err != nil {
-		return nil, fmt.Errorf("could not get the c '%v': %w", name, err)
+		return nil, errors.Wrapf(err, "could not create the collection '%v'", name)
 	}
 	return newCollection[T](collection, r.db), nil
 }
 
-func getCollectionSafe(db driver.Database, collectionName string) (driver.Collection, error) {
-	err := ensureCollectionExists(db, collectionName)
+func (r Repository[T]) GetCollection(name string) (any, error) {
+	collection, err := r.db.Collection(nil, name)
 	if err != nil {
-		return nil, fmt.Errorf("could not ensure the collection '%v' exists: %w", collectionName, err)
+		return nil, errors.Wrapf(err, "could not get the collection '%v'", collection)
 	}
-
-	collection, err := db.Collection(nil, collectionName)
-	if err != nil {
-		return nil, fmt.Errorf("could not get the c '%v': %w", collection, err)
-	}
-	return collection, nil
+	return newCollection[T](collection, r.db), nil
 }
 
-func ensureCollectionExists(db driver.Database, collectionName string) error {
-	exists, err := db.CollectionExists(nil, collectionName)
-
-	if exists {
-		return nil
-	}
-	_, err = db.CreateCollection(nil, collectionName, nil)
+func (r Repository[T]) DeleteCollection(name string) error {
+	c, err := r.GetCollection(name)
 	if err != nil {
-		return fmt.Errorf("could not create the c '%v': %w", collectionName, err)
+		return errors.Wrap(err, "could not get the collection")
+	}
+	err = c.(*Collection[T]).c.Remove(nil)
+	if err != nil {
+		return err
 	}
 	return nil
 }
