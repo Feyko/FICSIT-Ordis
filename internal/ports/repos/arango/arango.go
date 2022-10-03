@@ -3,6 +3,7 @@ package arango
 import (
 	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/id"
+	"FICSIT-Ordis/internal/ports/repos/repo"
 	"context"
 	"fmt"
 	"github.com/arangodb/go-driver"
@@ -104,7 +105,7 @@ func superInit(conn driver.Connection, conf config.ArangoConfig) error {
 	return nil
 }
 
-func (r Repository[T]) CreateCollection(name string) (any, error) {
+func (r *Repository[T]) CreateCollection(name string) (any, error) {
 	collection, err := r.db.CreateCollection(nil, name, nil)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not create the collection '%v'", name)
@@ -112,15 +113,15 @@ func (r Repository[T]) CreateCollection(name string) (any, error) {
 	return newCollection[T](collection, r.db), nil
 }
 
-func (r Repository[T]) GetCollection(name string) (any, error) {
+func (r *Repository[T]) GetCollection(name string) (any, error) {
 	collection, err := r.db.Collection(nil, name)
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not get the collection '%v'", collection)
 	}
-	return newCollection[T](collection, r.db), nil
+	return repo.Collection[T](newCollection[T](collection, r.db)), nil
 }
 
-func (r Repository[T]) DeleteCollection(name string) error {
+func (r *Repository[T]) DeleteCollection(name string) error {
 	c, err := r.GetCollection(name)
 	if err != nil {
 		return errors.Wrap(err, "could not get the collection")
@@ -137,14 +138,14 @@ type Collection[T id.IDer] struct {
 	db driver.Database
 }
 
-func newCollection[T id.IDer](collection driver.Collection, db driver.Database) Collection[T] {
-	return Collection[T]{
+func newCollection[T id.IDer](collection driver.Collection, db driver.Database) *Collection[T] {
+	return &Collection[T]{
 		c:  collection,
 		db: db,
 	}
 }
 
-func (c Collection[T]) Get(ID string) (T, error) {
+func (c *Collection[T]) Get(ID string) (T, error) {
 	query :=
 		`filter doc.id == @id
 return doc`
@@ -160,25 +161,29 @@ return doc`
 	return elements[0], nil
 }
 
-func (c Collection[T]) GetAll() ([]T, error) {
+func (c *Collection[T]) GetAll() ([]T, error) {
 	return runQueryInCollection(c, "return doc", nil)
 }
 
-func (c Collection[T]) Create(element id.IDer) error {
-	_, err := c.c.CreateDocument(nil, element)
+func (c *Collection[T]) Create(element T) error {
+	asMap, err := id.ToMapNoOverwrite(element)
+	if err != nil {
+		return errors.Wrap(err, "could not turn the element into a map")
+	}
+	_, err = c.c.CreateDocument(nil, asMap)
 	if err != nil {
 		return fmt.Errorf("could not create the document: %w", err)
 	}
 	return nil
 }
 
-func (c Collection[T]) Update(ID string, updateElement id.IDer) error {
+func (c *Collection[T]) Update(ID string, updateElement id.IDer) error {
 	asMap, err := id.ToMapNoOverwrite(updateElement)
 	if err != nil {
 		return errors.Wrap(err, "could not turn the element into a map")
 	}
 	asMap["id"] = ID
-	query := updateQueryForType(updateElement, "coll", "doc")
+	query := buildUpdateQuery(updateElement, "coll", "doc")
 	_, err = runQueryInCollection(c, query, asMap)
 	if err != nil {
 		return errors.Wrap(err, "could not update the document")
@@ -186,7 +191,7 @@ func (c Collection[T]) Update(ID string, updateElement id.IDer) error {
 	return nil
 }
 
-func (c Collection[T]) Delete(ID string) error {
+func (c *Collection[T]) Delete(ID string) error {
 	query :=
 		`filter doc.id == @id
 remove doc in @@coll`
@@ -199,7 +204,7 @@ remove doc in @@coll`
 	return nil
 }
 
-func (c Collection[T]) Search(search string, fields []string) ([]T, error) {
+func (c *Collection[T]) Search(search string, fields []string) ([]T, error) {
 	params := map[string]any{}
 
 	filters := make([]string, len(fields))
@@ -212,7 +217,7 @@ func (c Collection[T]) Search(search string, fields []string) ([]T, error) {
 	return runQueryInCollection(c, query, params)
 }
 
-func runQueryInCollection[T id.IDer](coll Collection[T], query string, params map[string]any) ([]T, error) {
+func runQueryInCollection[T id.IDer](coll *Collection[T], query string, params map[string]any) ([]T, error) {
 	if params == nil {
 		params = make(map[string]any)
 	}
@@ -240,9 +245,11 @@ func flattenCursor[T id.IDer](cursor driver.Cursor) ([]T, error) {
 	return r, nil
 }
 
-func updateQueryForType[T any](v T, collParam, elemParam string) string {
-	query := fmt.Sprintf("update @@%v with { ", elemParam)
-	t := reflect.TypeOf(v)
+func buildUpdateQuery[T any](element T, collParam, elemParam string) string {
+	query := "filter doc.id == @id\n"
+	query += fmt.Sprintf("update %v with { ", elemParam)
+	t := reflect.TypeOf(element)
+	v := reflect.ValueOf(element)
 	numField := t.NumField()
 	fieldNames := make([]string, 0, numField)
 
@@ -251,11 +258,17 @@ func updateQueryForType[T any](v T, collParam, elemParam string) string {
 		if !field.IsExported() {
 			continue
 		}
+		fieldV := v.Field(i)
+		kind := fieldV.Kind()
+		if (kind == reflect.Pointer || kind == reflect.Interface) && fieldV.IsNil() {
+			continue
+		}
 		fieldNames = append(fieldNames, field.Name)
 	}
 	for _, name := range fieldNames {
-		query += fmt.Sprintf("%v: @%v", name, name)
+		query += fmt.Sprintf("%v: @%v, ", name, name)
 	}
+	query = strings.TrimSuffix(query, ", ")
 	query += fmt.Sprintf(" } in @@%v", collParam)
 	return query
 }

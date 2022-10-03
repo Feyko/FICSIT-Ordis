@@ -1,6 +1,10 @@
 package base
 
 import (
+	"FICSIT-Ordis/internal/id"
+	"FICSIT-Ordis/internal/ports/repos"
+	"FICSIT-Ordis/internal/ports/repos/repo"
+	"FICSIT-Ordis/test"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -8,6 +12,7 @@ import (
 type SearchableTestSuite struct {
 	suite.Suite
 	mod *Searchable[ExampleElement]
+	rep repo.Repository[ExampleElement]
 }
 
 func (s *SearchableTestSuite) SafeCreateElement(element ExampleElement) {
@@ -22,12 +27,23 @@ func (s *SearchableTestSuite) SafeCreateElements(elements []ExampleElement) {
 	}
 }
 
+func (s *SearchableTestSuite) SetupSuite() {
+	rep, err := test.GetRepo()
+	s.Require().NoError(err)
+	rep, err = repos.Retype[ExampleElement, id.IDer](rep)
+	s.Require().NoError(err)
+	s.rep = rep
+}
+
 func (s *SearchableTestSuite) SetupTest() {
-	mod, err := newDefaultSearchable[ExampleElement]()
-	if err != nil {
-		s.Fail("Error when setting up: %+v", err)
-	}
-	s.mod = mod
+	collection, err := repos.CreateCollection[ExampleElement](s.rep, "Searchable")
+	s.Require().NoError(err)
+	s.mod = NewSearchable[ExampleElement](collection)
+}
+
+func (s *SearchableTestSuite) TearDownTest() {
+	err := s.rep.DeleteCollection("Searchable")
+	s.Require().NoError(err)
 }
 
 func (s *SearchableTestSuite) TestSearchValid() {

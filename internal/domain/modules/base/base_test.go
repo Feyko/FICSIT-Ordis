@@ -196,7 +196,7 @@ func (s *ExampleModuleTestSuite) TestUpdate() {
 
 	err := s.mod.Update(defaultElement.Name, updateElement)
 
-	assert.Nil(t, err, "Error when trying to update an element")
+	require.Nil(t, err, "Error when trying to update an element")
 
 	cmd := checkedGet(t, s.mod, defaultElement.Name)
 

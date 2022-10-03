@@ -5,7 +5,6 @@ import (
 	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/repo"
 	"FICSIT-Ordis/test"
-	"fmt"
 	"github.com/pkg/errors"
 )
 
@@ -14,7 +13,7 @@ func newDefaultSearchable[E id.Searchable]() (*Searchable[E], error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting repo")
 	}
-	collection, err := repos.CreateCollection[E](repo, fmt.Sprintf("%T", *new(E)))
+	collection, err := repos.CreateCollection[E](repo, "Searchable")
 	if err != nil {
 		return nil, errors.Wrap(err, "could not create collection")
 	}

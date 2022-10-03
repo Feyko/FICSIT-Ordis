@@ -20,7 +20,7 @@ func GetCollection[T id.IDer, U id.IDer](repository repo.Repository[U], name str
 	}
 	typed, ok := collection.(repo.Collection[T])
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("collection '%v' does not hold type '%t'", name, *new(T)))
+		return nil, errors.New(fmt.Sprintf("collection '%v' does not hold type '%T'", name, *new(T)))
 	}
 	return typed, nil
 }
@@ -36,7 +36,7 @@ func CreateCollection[T id.IDer, U id.IDer](repository repo.Repository[U], name 
 	}
 	typed, ok := collection.(repo.Collection[T])
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("created collection '%v' does not hold type '%t'", name, *new(T)))
+		return nil, errors.New(fmt.Sprintf("created collection '%v' does not hold type '%T'", name, *new(T)))
 	}
 	return typed, nil
 }
@@ -47,7 +47,6 @@ func Retype[newT id.IDer, oldT id.IDer](repo repo.Repository[oldT]) (repo.Reposi
 		return (*memrepo.Repository[newT])(typed), nil
 	case *arango.Repository[oldT]:
 		return (*arango.Repository[newT])(typed), nil
-
 	default:
 		return nil, errors.New("unsupported repository type")
 	}

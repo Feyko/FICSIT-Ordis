@@ -1,6 +1,7 @@
 package id
 
 import (
+	"FICSIT-Ordis/internal/util"
 	"github.com/fatih/structs"
 	"github.com/pkg/errors"
 )
@@ -27,8 +28,13 @@ func toMap(v IDer, checkForIDField bool) (map[string]any, error) {
 	asMap := structs.Map(v)
 	if checkForIDField {
 		_, ok := asMap["id"]
-		if !ok {
-			return nil, errors.Errorf("value of type %t already has field id", v)
+		if ok {
+			return nil, errors.Errorf("value of type %T already has field id", v)
+		}
+	}
+	for k, v := range asMap {
+		if util.IsNil(v) {
+			delete(asMap, k)
 		}
 	}
 	asMap["id"] = v.ID()

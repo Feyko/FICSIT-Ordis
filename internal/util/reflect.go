@@ -61,3 +61,14 @@ func getStructValue(v reflect.Value) (r reflect.Value, isPtr, ok bool) {
 	}
 	return v, true, true
 }
+
+func IsNil(v any) bool {
+	if v == nil {
+		return true
+	}
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
+		return reflect.ValueOf(v).IsNil()
+	}
+	return false
+}
