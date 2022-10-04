@@ -16,7 +16,7 @@ type patch struct {
 	S  *string
 	I  *int
 	P  **string
-	SL *[]string
+	SL []string
 }
 
 type invalidPatch struct {
@@ -46,7 +46,7 @@ func (s *ReflectTestSuite) SetupTest() {
 		S:  &newString,
 		I:  Ptr(420),
 		P:  Ptr(newStringPtr),
-		SL: Ptr([]string{newString}),
+		SL: []string{newString},
 	}
 	s.defaultExpected = value{
 		S:  newString,
@@ -101,7 +101,7 @@ func (s *ReflectTestSuite) TestPatchStructPartial() {
 	newString := "Patched"
 	patch := patch{
 		S:  &newString,
-		SL: Ptr([]string{newString}),
+		SL: []string{newString},
 	}
 	expected := value{
 		S:  newString,

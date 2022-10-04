@@ -31,10 +31,12 @@ func PatchStruct(v any, patch any) error {
 			continue
 		}
 		patchField := patchV.Field(i)
-		if patchField.Kind() != reflect.Pointer || patchField.IsNil() {
+		if !IsNilable(patchField) || patchField.IsNil() {
 			continue
 		}
-		patchField = patchField.Elem()
+		if patchField.Kind() == reflect.Pointer {
+			patchField = patchField.Elem()
+		}
 		structField := structV.FieldByIndex(structFieldT.Index)
 
 		if structField.Type() != patchField.Type() {
@@ -71,4 +73,13 @@ func IsNil(v any) bool {
 		return reflect.ValueOf(v).IsNil()
 	}
 	return false
+}
+
+func IsNilable(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
+		return true
+	default:
+		return false
+	}
 }
