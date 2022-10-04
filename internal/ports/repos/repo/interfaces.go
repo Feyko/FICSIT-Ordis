@@ -20,7 +20,7 @@ type Collection[E id.IDer] interface {
 	Search(search string, fields []string) ([]E, error)
 
 	Create(element E) error
-	Update(ID string, updateElement id.IDer) error
+	Update(ID string, updateElement any) (E, error)
 	Delete(ID string) error
 }
 

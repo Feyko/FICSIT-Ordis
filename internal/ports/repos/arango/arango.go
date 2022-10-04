@@ -18,7 +18,7 @@ type Repository[T id.IDer] struct {
 	db     driver.Database
 }
 
-func New[T id.IDer](conf config.ArangoConfig) (*Repository[T], error) {
+func New[T id.IDer](conf config.ArangoConfig) (repo.Repository[T], error) {
 	repo := new(Repository[T])
 	client, err := connectClient(conf)
 	if err != nil {
@@ -149,7 +149,7 @@ func (c *Collection[T]) Get(ID string) (T, error) {
 	query :=
 		`filter doc.id == @id
 return doc`
-	elements, err := runQueryInCollection(c, query, map[string]interface{}{
+	elements, err := runQueryInCollection(nil, c, query, map[string]interface{}{
 		"id": ID,
 	})
 	if err != nil {
@@ -162,11 +162,11 @@ return doc`
 }
 
 func (c *Collection[T]) GetAll() ([]T, error) {
-	return runQueryInCollection(c, "return doc", nil)
+	return runQueryInCollection(nil, c, "return doc", nil)
 }
 
 func (c *Collection[T]) Create(element T) error {
-	asMap, err := id.ToMapNoOverwrite(element)
+	asMap, err := id.ToMap(element)
 	if err != nil {
 		return errors.Wrap(err, "could not turn the element into a map")
 	}
@@ -177,25 +177,25 @@ func (c *Collection[T]) Create(element T) error {
 	return nil
 }
 
-func (c *Collection[T]) Update(ID string, updateElement id.IDer) error {
-	asMap, err := id.ToMapNoOverwrite(updateElement)
+func (c *Collection[T]) Update(ID string, updateElement any) (T, error) {
+	asMap, err := id.AnyToMapNoID(updateElement)
 	if err != nil {
-		return errors.Wrap(err, "could not turn the element into a map")
+		return *new(T), errors.Wrap(err, "could not turn the element into a map")
 	}
 	asMap["id"] = ID
 	query := buildUpdateQuery(updateElement, "coll", "doc")
-	_, err = runQueryInCollection(c, query, asMap)
+	elems, err := runQueryInCollection(nil, c, query, asMap)
 	if err != nil {
-		return errors.Wrap(err, "could not update the document")
+		return *new(T), errors.Wrap(err, "could not update the document")
 	}
-	return nil
+	return elems[0], nil
 }
 
 func (c *Collection[T]) Delete(ID string) error {
 	query :=
 		`filter doc.id == @id
 remove doc in @@coll`
-	_, err := runQueryInCollection(c, query, map[string]interface{}{
+	_, err := runQueryInCollection(nil, c, query, map[string]interface{}{
 		"id": ID,
 	})
 	if err != nil {
@@ -214,15 +214,15 @@ func (c *Collection[T]) Search(search string, fields []string) ([]T, error) {
 	query := "\tfilter "
 	query += strings.Join(filters, " || ")
 	query += "\n\treturn doc"
-	return runQueryInCollection(c, query, params)
+	return runQueryInCollection(nil, c, query, params)
 }
 
-func runQueryInCollection[T id.IDer](coll *Collection[T], query string, params map[string]any) ([]T, error) {
+func runQueryInCollection[T id.IDer](ctx context.Context, coll *Collection[T], query string, params map[string]any) ([]T, error) {
 	if params == nil {
 		params = make(map[string]any)
 	}
 	params["@coll"] = coll.c.Name()
-	ctx := driver.WithQueryCount(context.Background(), true)
+	ctx = driver.WithQueryCount(ctx, true)
 	query = "for doc in @@coll\n" + query
 	cursor, err := coll.db.Query(ctx, query, params)
 	if err != nil {
@@ -269,6 +269,6 @@ func buildUpdateQuery[T any](element T, collParam, elemParam string) string {
 		query += fmt.Sprintf("%v: @%v, ", name, name)
 	}
 	query = strings.TrimSuffix(query, ", ")
-	query += fmt.Sprintf(" } in @@%v", collParam)
+	query += fmt.Sprintf(" } in @@%v\nreturn NEW", collParam)
 	return query
 }

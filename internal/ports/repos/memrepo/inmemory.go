@@ -112,16 +112,16 @@ func (repo *Collection[T]) Create(element T) error {
 	return nil
 }
 
-func (repo *Collection[T]) Update(ID string, updateElement id.IDer) error {
+func (repo *Collection[T]) Update(ID string, updateElement any) (T, error) {
 	_, i, err := repo.findWithIndex(ID)
 	if err != nil {
-		return errors.Wrap(err, "could not get the element")
+		return *new(T), errors.Wrap(err, "could not get the element")
 	}
 	err = util.PatchStruct(&repo.elements[i], updateElement)
 	if err != nil {
-		return errors.Wrap(err, "could not update the element")
+		return *new(T), errors.Wrap(err, "could not update the element")
 	}
-	return nil
+	return repo.elements[i], nil
 }
 
 func (repo *Collection[T]) Delete(ID string) error {

@@ -52,10 +52,10 @@ func (mod *Module[E]) Delete(ID string) error {
 	return nil
 }
 
-func (mod *Module[E]) Update(ID string, updateElement id.IDer) error {
-	err := mod.Collection.Update(ID, updateElement)
+func (mod *Module[E]) Update(ID string, updateElement any) (E, error) {
+	elem, err := mod.Collection.Update(ID, updateElement)
 	if err != nil {
-		return fmt.Errorf("could not update the element: %w", err)
+		return *new(E), fmt.Errorf("could not update the element: %w", err)
 	}
-	return nil
+	return elem, nil
 }
