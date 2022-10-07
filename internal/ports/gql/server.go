@@ -1,6 +1,7 @@
-package main
+package gql
 
 import (
+	"FICSIT-Ordis/internal/domain/ordis"
 	"FICSIT-Ordis/internal/ports/gql/graph"
 	"FICSIT-Ordis/internal/ports/gql/graph/generated"
 	"log"
@@ -13,17 +14,17 @@ import (
 
 const defaultPort = "8080"
 
-func main() {
-	port := os.Getenv("PORT")
+func Server(o *ordis.Ordis) error {
+	port := os.Getenv("ORDIS_GQL_PORT")
 	if port == "" {
 		port = defaultPort
 	}
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{O: o}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	return http.ListenAndServe(":"+port, nil)
 }

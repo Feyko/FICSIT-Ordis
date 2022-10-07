@@ -3,8 +3,9 @@ package ordis
 import (
 	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/domain/modules/commands"
+	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/arango"
-	"fmt"
+	"github.com/pkg/errors"
 )
 
 type Ordis struct {
@@ -12,14 +13,14 @@ type Ordis struct {
 }
 
 func New(conf config.OrdisConfig) (Ordis, error) {
-	repo, err := arango.New(conf.Arango)
+	repo, err := arango.New[id.IDer](conf.Arango)
 	if err != nil {
-		return Ordis{}, fmt.Errorf("could not create the repository: %w", err)
+		return Ordis{}, errors.Wrap(err, "could not create the repository")
 	}
 
 	commandsModule, err := commands.New(conf.Commands, repo)
 	if err != nil {
-		return Ordis{}, fmt.Errorf("could not create the commands module: %w", err)
+		return Ordis{}, errors.Wrap(err, "could not create the commands module")
 	}
 	return Ordis{
 		Commands: commandsModule,

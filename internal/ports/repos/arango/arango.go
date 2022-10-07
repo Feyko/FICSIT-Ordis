@@ -25,7 +25,7 @@ func New[T id.IDer](conf config.ArangoConfig) (repo.Repository[T], error) {
 		return nil, err
 	}
 	db, err := client.Database(nil, conf.DBName)
-	if driver.IsNotFound(err) {
+	if driver.IsNotFoundGeneral(err) {
 		db, err = client.CreateDatabase(nil, conf.DBName, &driver.CreateDatabaseOptions{
 			Users: []driver.CreateDatabaseUserOptions{{
 				UserName: conf.Username,
@@ -37,7 +37,7 @@ func New[T id.IDer](conf config.ArangoConfig) (repo.Repository[T], error) {
 		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("could not get the database '%v': %w", conf.DBName, err)
+		return nil, errors.Wrapf(err, "could not get the database '%v'", conf.DBName)
 	}
 
 	repo.client = client
@@ -48,20 +48,20 @@ func New[T id.IDer](conf config.ArangoConfig) (repo.Repository[T], error) {
 func connectClient(conf config.ArangoConfig) (driver.Client, error) {
 	conn, err := http.NewConnection(http.ConnectionConfig{Endpoints: conf.Endpoints})
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to the endpoint: %w", err)
+		return nil, errors.Wrap(err, "could not connect to the endpoint")
 	}
 	client, err := driver.NewClient(driver.ClientConfig{Connection: conn, Authentication: driver.BasicAuthentication(conf.Username, conf.Password)})
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to the DB: %w", err)
+		return nil, errors.Wrap(err, "could not connect to the DB")
 	}
 	authed, err := authCheck(client, conf)
 	if err != nil {
-		return nil, fmt.Errorf("authentication test failed: %w", err)
+		return nil, errors.Wrap(err, "authentication test failed")
 	}
 	if !authed {
 		err := superInit(client.Connection(), conf)
 		if err != nil {
-			return nil, fmt.Errorf("could not create the database and user: %w", err)
+			return nil, errors.Wrap(err, "could not create the database and user")
 		}
 	}
 
@@ -85,7 +85,7 @@ func superInit(conn driver.Connection, conf config.ArangoConfig) error {
 		Authentication: driver.BasicAuthentication(conf.SuperUsername, conf.SuperPassword),
 	})
 	if err != nil {
-		return fmt.Errorf("could not connect as the superuser '%v': %w", conf.SuperUsername, err)
+		return errors.Wrapf(err, "could not connect as the superuser '%v'", conf.SuperUsername)
 	}
 	_, err = client.CreateDatabase(nil, conf.DBName, &driver.CreateDatabaseOptions{Users: []driver.CreateDatabaseUserOptions{{
 		UserName: conf.Username,
@@ -100,7 +100,7 @@ func superInit(conn driver.Connection, conf config.ArangoConfig) error {
 		return fmt.Errorf("superuser '%v' has insufficient permissions to create a new database", conf.SuperUsername)
 	}
 	if err != nil {
-		return fmt.Errorf("could not create the db '%v': %w", conf.DBName, err)
+		return errors.Wrapf(err, "could not create the db '%v'", conf.DBName)
 	}
 	return nil
 }
@@ -115,6 +115,9 @@ func (r *Repository[T]) CreateCollection(name string) (any, error) {
 
 func (r *Repository[T]) GetCollection(name string) (any, error) {
 	collection, err := r.db.Collection(nil, name)
+	if driver.IsNotFoundGeneral(err) {
+		return nil, repo.ErrCollectionNotFound
+	}
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not get the collection '%v'", collection)
 	}
@@ -153,7 +156,7 @@ return doc`
 		"id": ID,
 	})
 	if err != nil {
-		return *new(T), fmt.Errorf("could not read the document: %w", err)
+		return *new(T), errors.Wrap(err, "could not read the document")
 	}
 	if len(elements) == 0 {
 		return *new(T), errors.Errorf("could not find the element with ID %v", ID)
@@ -172,7 +175,7 @@ func (c *Collection[T]) Create(element T) error {
 	}
 	_, err = c.c.CreateDocument(nil, asMap)
 	if err != nil {
-		return fmt.Errorf("could not create the document: %w", err)
+		return errors.Wrap(err, "could not create the document")
 	}
 	return nil
 }
@@ -226,7 +229,7 @@ func runQueryInCollection[T id.IDer](ctx context.Context, coll *Collection[T], q
 	query = "for doc in @@coll\n" + query
 	cursor, err := coll.db.Query(ctx, query, params)
 	if err != nil {
-		return nil, fmt.Errorf("could not query the database: %w", err)
+		return nil, errors.Wrap(err, "could not query the database")
 	}
 	return flattenCursor[T](cursor)
 }
@@ -238,7 +241,7 @@ func flattenCursor[T id.IDer](cursor driver.Cursor) ([]T, error) {
 	for i := 0; i < count; i++ {
 		_, err := cursor.ReadDocument(nil, &r[i])
 		if err != nil {
-			return nil, fmt.Errorf("could not read the document: %w", err)
+			return nil, errors.Wrap(err, "could not read the document")
 		}
 	}
 
