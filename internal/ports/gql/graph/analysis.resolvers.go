@@ -9,10 +9,12 @@ import (
 	"fmt"
 )
 
+// AnalyseFile is the resolver for the analyseFile field.
 func (r *queryResolver) AnalyseFile(ctx context.Context, fileURL string) (*model.AnalysisResult, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
+// AnalyseText is the resolver for the analyseText field.
 func (r *queryResolver) AnalyseText(ctx context.Context, text string) (*model.AnalysisResult, error) {
 	panic(fmt.Errorf("not implemented"))
 }

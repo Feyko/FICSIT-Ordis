@@ -1,1 +1,7 @@
 directive @isAuthenticated on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+scalar AuthToken
+
+extend type Mutation {
+    revokeAuth(token: AuthToken): Boolean! @isAuthenticated
+}
