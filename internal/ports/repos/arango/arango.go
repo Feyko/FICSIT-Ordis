@@ -148,11 +148,11 @@ func newCollection[T id.IDer](collection driver.Collection, db driver.Database) 
 	}
 }
 
-func (c *Collection[T]) Get(ID string) (T, error) {
+func (c *Collection[T]) Get(ctx context.Context, ID string) (T, error) {
 	query :=
 		`filter doc.id == @id
 return doc`
-	elements, err := runQueryInCollection(nil, c, query, map[string]interface{}{
+	elements, err := runQueryInCollection(ctx, c, query, map[string]interface{}{
 		"id": ID,
 	})
 	if err != nil {
@@ -164,41 +164,41 @@ return doc`
 	return elements[0], nil
 }
 
-func (c *Collection[T]) GetAll() ([]T, error) {
-	return runQueryInCollection(nil, c, "return doc", nil)
+func (c *Collection[T]) GetAll(ctx context.Context) ([]T, error) {
+	return runQueryInCollection(ctx, c, "return doc", nil)
 }
 
-func (c *Collection[T]) Create(element T) error {
+func (c *Collection[T]) Create(ctx context.Context, element T) error {
 	asMap, err := id.ToMap(element)
 	if err != nil {
 		return errors.Wrap(err, "could not turn the element into a map")
 	}
-	_, err = c.c.CreateDocument(nil, asMap)
+	_, err = c.c.CreateDocument(ctx, asMap)
 	if err != nil {
 		return errors.Wrap(err, "could not create the document")
 	}
 	return nil
 }
 
-func (c *Collection[T]) Update(ID string, updateElement any) (T, error) {
+func (c *Collection[T]) Update(ctx context.Context, ID string, updateElement any) (T, error) {
 	asMap, err := id.AnyToMapNoID(updateElement)
 	if err != nil {
 		return *new(T), errors.Wrap(err, "could not turn the element into a map")
 	}
 	asMap["id"] = ID
 	query := buildUpdateQuery(updateElement, "coll", "doc")
-	elems, err := runQueryInCollection(nil, c, query, asMap)
+	elems, err := runQueryInCollection(ctx, c, query, asMap)
 	if err != nil {
 		return *new(T), errors.Wrap(err, "could not update the document")
 	}
 	return elems[0], nil
 }
 
-func (c *Collection[T]) Delete(ID string) error {
+func (c *Collection[T]) Delete(ctx context.Context, ID string) error {
 	query :=
 		`filter doc.id == @id
 remove doc in @@coll`
-	_, err := runQueryInCollection(nil, c, query, map[string]interface{}{
+	_, err := runQueryInCollection(ctx, c, query, map[string]interface{}{
 		"id": ID,
 	})
 	if err != nil {
@@ -207,7 +207,7 @@ remove doc in @@coll`
 	return nil
 }
 
-func (c *Collection[T]) Search(search string, fields []string) ([]T, error) {
+func (c *Collection[T]) Search(ctx context.Context, search string, fields []string) ([]T, error) {
 	params := map[string]any{}
 
 	filters := make([]string, len(fields))
@@ -217,7 +217,7 @@ func (c *Collection[T]) Search(search string, fields []string) ([]T, error) {
 	query := "\tfilter "
 	query += strings.Join(filters, " || ")
 	query += "\n\treturn doc"
-	return runQueryInCollection(nil, c, query, params)
+	return runQueryInCollection(ctx, c, query, params)
 }
 
 func runQueryInCollection[T id.IDer](ctx context.Context, coll *Collection[T], query string, params map[string]any) ([]T, error) {
@@ -231,15 +231,15 @@ func runQueryInCollection[T id.IDer](ctx context.Context, coll *Collection[T], q
 	if err != nil {
 		return nil, errors.Wrap(err, "could not query the database")
 	}
-	return flattenCursor[T](cursor)
+	return flattenCursor[T](ctx, cursor)
 }
 
-func flattenCursor[T id.IDer](cursor driver.Cursor) ([]T, error) {
+func flattenCursor[T id.IDer](ctx context.Context, cursor driver.Cursor) ([]T, error) {
 	defer cursor.Close()
 	count := int(cursor.Count())
 	r := make([]T, count)
 	for i := 0; i < count; i++ {
-		_, err := cursor.ReadDocument(nil, &r[i])
+		_, err := cursor.ReadDocument(ctx, &r[i])
 		if err != nil {
 			return nil, errors.Wrap(err, "could not read the document")
 		}

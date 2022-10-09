@@ -42,7 +42,7 @@ func (m *Module) Execute(text string) (*domain.Response, error) {
 }
 
 func (m *Module) Get(name string) (*domain.Command, error) {
-	cmds, err := m.Search(name)
+	cmds, err := m.Search(nil, name)
 	if err != nil {
 		return nil, errors.Wrap(err, "error searching")
 	}

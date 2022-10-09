@@ -16,13 +16,13 @@ type SearchableTestSuite struct {
 }
 
 func (s *SearchableTestSuite) SafeCreateElement(element ExampleElement) {
-	err := s.mod.Create(element)
+	err := s.mod.Create(nil, element)
 	s.Require().NoErrorf(err, "Could not create the element: %v", err)
 }
 
 func (s *SearchableTestSuite) SafeCreateElements(elements []ExampleElement) {
 	for _, cmd := range elements {
-		err := s.mod.Create(cmd)
+		err := s.mod.Create(nil, cmd)
 		s.Require().NoErrorf(err, "Could not create an element: %v", err)
 	}
 }
@@ -58,7 +58,7 @@ func (s *SearchableTestSuite) TestSearchValid() {
 	}
 
 	s.SafeCreateElements(input)
-	actual, err := s.mod.Search("SearchMe")
+	actual, err := s.mod.Search(nil, "SearchMe")
 	s.Require().NoErrorf(err, "Could not search for elements: %v", err)
 	s.Equal(expected, actual)
 }

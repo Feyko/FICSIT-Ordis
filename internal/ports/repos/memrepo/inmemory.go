@@ -4,6 +4,7 @@ import (
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/repo"
 	"FICSIT-Ordis/internal/util"
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
@@ -57,7 +58,7 @@ type Collection[T id.IDer] struct {
 	elements []T
 }
 
-func (repo *Collection[T]) Get(ID string) (T, error) {
+func (repo *Collection[T]) Get(ctx context.Context, ID string) (T, error) {
 	elem, _, err := repo.findWithIndex(ID)
 	return elem, err
 }
@@ -71,12 +72,12 @@ func (repo *Collection[T]) findWithIndex(ID string) (T, int, error) {
 	return *new(T), 0, fmt.Errorf("element with ID '%v' does not exist", ID)
 }
 
-func (repo *Collection[T]) GetAll() ([]T, error) {
+func (repo *Collection[T]) GetAll(ctx context.Context) ([]T, error) {
 	return slices.Clone(repo.elements), nil
 }
 
 //Terrible code. Need to refactor this asap
-func (repo *Collection[T]) Search(search string, fields []string) ([]T, error) {
+func (repo *Collection[T]) Search(ctx context.Context, search string, fields []string) ([]T, error) {
 	var r []T
 	for _, e := range repo.elements {
 		reflected := reflect.ValueOf(e)
@@ -103,8 +104,8 @@ func (repo *Collection[T]) Search(search string, fields []string) ([]T, error) {
 	return r, nil
 }
 
-func (repo *Collection[T]) Create(element T) error {
-	_, err := repo.Get(element.ID())
+func (repo *Collection[T]) Create(ctx context.Context, element T) error {
+	_, err := repo.Get(ctx, element.ID())
 	if err == nil {
 		return fmt.Errorf("element with ID '%v' already exists", element.ID())
 	}
@@ -112,7 +113,7 @@ func (repo *Collection[T]) Create(element T) error {
 	return nil
 }
 
-func (repo *Collection[T]) Update(ID string, updateElement any) (T, error) {
+func (repo *Collection[T]) Update(ctx context.Context, ID string, updateElement any) (T, error) {
 	_, i, err := repo.findWithIndex(ID)
 	if err != nil {
 		return *new(T), errors.Wrap(err, "could not get the element")
@@ -124,7 +125,7 @@ func (repo *Collection[T]) Update(ID string, updateElement any) (T, error) {
 	return repo.elements[i], nil
 }
 
-func (repo *Collection[T]) Delete(ID string) error {
+func (repo *Collection[T]) Delete(ctx context.Context, ID string) error {
 	_, i, err := repo.findWithIndex(ID)
 	if err != nil {
 		return err

@@ -15,7 +15,7 @@ import (
 // CreateCommand is the resolver for the createCommand field.
 func (r *mutationResolver) CreateCommand(ctx context.Context, command model.CommandCreation) (*domain.Command, error) {
 	cmd := domain.Command(command)
-	err := r.O.Commands.Create(cmd)
+	err := r.O.Commands.Create(nil, cmd)
 	return &cmd, err
 }
 
@@ -25,7 +25,7 @@ func (r *mutationResolver) UpdateCommand(ctx context.Context, name string, comma
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not find command '%v'", name)
 	}
-	newCommand, err := r.O.Commands.Update(cmd.ID(), command)
+	newCommand, err := r.O.Commands.Update(nil, cmd.ID(), command)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not update the command")
 	}
@@ -35,13 +35,13 @@ func (r *mutationResolver) UpdateCommand(ctx context.Context, name string, comma
 
 // DeleteCommand is the resolver for the deleteCommand field.
 func (r *mutationResolver) DeleteCommand(ctx context.Context, name string) (bool, error) {
-	err := r.O.Commands.Delete(name)
+	err := r.O.Commands.Delete(nil, name)
 	return err == nil, err
 }
 
 // ListAllCommands is the resolver for the listAllCommands field.
 func (r *queryResolver) ListAllCommands(ctx context.Context) ([]domain.Command, error) {
-	return r.O.Commands.List()
+	return r.O.Commands.List(nil)
 }
 
 // FindCommand is the resolver for the findCommand field.

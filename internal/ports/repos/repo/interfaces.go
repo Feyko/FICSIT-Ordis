@@ -2,6 +2,7 @@ package repo
 
 import (
 	"FICSIT-Ordis/internal/id"
+	"context"
 )
 
 type Repository[T id.IDer] interface {
@@ -15,15 +16,11 @@ type Repository[T id.IDer] interface {
 }
 
 type Collection[E id.IDer] interface {
-	Get(ID string) (E, error)
-	GetAll() ([]E, error)
-	Search(search string, fields []string) ([]E, error)
+	Get(ctx context.Context, ID string) (E, error)
+	GetAll(ctx context.Context) ([]E, error)
+	Search(ctx context.Context, search string, fields []string) ([]E, error)
 
-	Create(element E) error
-	Update(ID string, updateElement any) (E, error)
-	Delete(ID string) error
-}
-
-type Updater[T any] interface {
-	Update(update T) T
+	Create(ctx context.Context, element E) error
+	Update(ctx context.Context, ID string, updateElement any) (E, error)
+	Delete(ctx context.Context, ID string) error
 }

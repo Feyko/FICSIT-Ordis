@@ -98,23 +98,23 @@ func createDefaultCommandChecked(t *testing.T, mod *ExampleModule) {
 //}
 
 func checkedCreate(t *testing.T, mod *ExampleModule, cmd ExampleElement) {
-	err := mod.Create(cmd)
+	err := mod.Create(nil, cmd)
 	require.NoError(t, err)
 }
 
 func checkedDelete(t *testing.T, mod *ExampleModule, name string) {
-	err := mod.Delete(name)
+	err := mod.Delete(nil, name)
 	require.NoError(t, err)
 }
 
 func checkedGet(t *testing.T, mod *ExampleModule, name string) ExampleElement {
-	cmd, err := mod.Get(name)
+	cmd, err := mod.Get(nil, name)
 	require.NoError(t, err)
 	return cmd
 }
 
 func checkedList(t *testing.T, mod *ExampleModule) []ExampleElement {
-	list, err := mod.List()
+	list, err := mod.List(nil)
 	require.NoError(t, err)
 	return list
 }
@@ -123,7 +123,7 @@ func (s *ExampleModuleTestSuite) TestCreate() {
 	t := s.T()
 	createDefaultCommandChecked(t, s.mod)
 
-	err := s.mod.Create(defaultElement)
+	err := s.mod.Create(nil, defaultElement)
 
 	assert.Error(t, err, "Was able to create already existing element")
 }
@@ -180,7 +180,7 @@ func (s *ExampleModuleTestSuite) TestDelete() {
 
 	checkedDelete(t, s.mod, defaultElement.Name)
 
-	_, err := s.mod.Get(defaultElement.Name)
+	_, err := s.mod.Get(nil, defaultElement.Name)
 
 	assert.NotNil(t, err, "Successfully retrieved an element that should have been deleted")
 }
@@ -194,7 +194,7 @@ func (s *ExampleModuleTestSuite) TestUpdate() {
 
 	createDefaultCommandChecked(t, s.mod)
 
-	r, err := s.mod.Update(defaultElement.Name, updateElement)
+	r, err := s.mod.Update(nil, defaultElement.Name, updateElement)
 
 	require.NoError(t, err, "Error when trying to update an element")
 	assert.Equal(t, expected, r, "Returned element is not updated")

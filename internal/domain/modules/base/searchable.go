@@ -5,6 +5,7 @@ import (
 	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/repo"
 	"FICSIT-Ordis/test"
+	"context"
 	"github.com/pkg/errors"
 )
 
@@ -34,6 +35,6 @@ type Searchable[E id.Searchable] struct {
 	searchFields []string
 }
 
-func (s *Searchable[E]) Search(search string) ([]E, error) {
-	return s.Collection.Search(search, s.searchFields)
+func (s *Searchable[E]) Search(ctx context.Context, search string) ([]E, error) {
+	return s.Collection.Search(ctx, search, s.searchFields)
 }
