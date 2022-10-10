@@ -41,6 +41,21 @@ func CreateCollection[T id.IDer, U id.IDer](repository repo.Repository[U], name 
 	return typed, nil
 }
 
+func GetOrCreateCollection[T id.IDer, U id.IDer](repository repo.Repository[U], name string) (repo.Collection[T], error) {
+	collection, err := GetCollection[T](repository, name)
+	notFound := errors.Is(err, repo.ErrCollectionNotFound)
+	if notFound {
+		collection, err = CreateCollection[T](repository, name)
+		if err != nil {
+			return nil, errors.Wrap(err, "create")
+		}
+	}
+	if err != nil && !notFound {
+		return nil, errors.Wrap(err, "get")
+	}
+	return collection, nil
+}
+
 func Retype[newT id.IDer, oldT id.IDer](repo repo.Repository[oldT]) (repo.Repository[newT], error) {
 	switch typed := repo.(type) {
 	case *memrepo.Repository[oldT]:

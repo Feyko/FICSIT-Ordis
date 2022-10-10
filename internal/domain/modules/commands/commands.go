@@ -12,16 +12,9 @@ import (
 )
 
 func New[T id.IDer](conf config.CommandsConfig, repository repo.Repository[T]) (*Module, error) {
-	collection, err := repos.GetCollection[domain.Command](repository, "Commands")
-	notFound := errors.Is(err, repo.ErrCollectionNotFound)
-	if notFound {
-		collection, err = repos.CreateCollection[domain.Command](repository, "Commands")
-		if err != nil {
-			return nil, errors.Wrap(err, "could not create the collection")
-		}
-	}
-	if err != nil && !notFound {
-		return nil, errors.Wrap(err, "could not get the collection")
+	collection, err := repos.GetOrCreateCollection[domain.Command](repository, "Commands")
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get or create the collection")
 	}
 	return &Module{
 		*base.NewSearchable[domain.Command](collection),
