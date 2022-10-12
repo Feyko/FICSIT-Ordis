@@ -1,31 +1,82 @@
 package auth
 
 import (
-	"FICSIT-Ordis/internal/id"
-	"FICSIT-Ordis/internal/ports/repos"
-	"FICSIT-Ordis/internal/ports/repos/repo"
+	"FICSIT-Ordis/internal/config"
+	"FICSIT-Ordis/internal/domain/domain"
+	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
 )
 
-func New[T id.IDer](rep repo.Repository[T]) (*Module, error) {
-	collection, err := repos.GetOrCreateCollection[Token](rep, "Auth")
-	if err != nil {
-		return nil, errors.Wrap(err, "could not get or create the collection")
-	}
-
+func New(conf config.AuthConfig) (*Module, error) {
 	return &Module{
-		Collection: collection,
+		secret: []byte(conf.Secret),
 	}, nil
 }
 
 type Module struct {
-	Collection repo.Collection[Token]
+	secret []byte
+}
+
+func (m *Module) NewToken(roles ...domain.Role) (Token, error) {
+	claims := &authClaims{roles}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+	tokenString, err := token.SignedString(m.secret)
+	if err != nil {
+		return Token{}, errors.Wrap(err, "could not sign token")
+	}
+	token.Raw = tokenString
+	return newToken(token, claims), nil
+}
+
+func (m *Module) ValidateToken(token *Token) error {
+	claims := &authClaims{}
+	jwToken, err := jwt.ParseWithClaims(token.String, claims, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.Errorf("Unexpected signing method '%v'", token.Header["alg"])
+		}
+		return m.secret, nil
+	})
+	token.token = jwToken
+	if claims != nil {
+		token.Roles = claims.Roles
+	}
+	return err
 }
 
 type Token struct {
-	String string
+	String      string
+	Roles       []domain.Role
+	Permissions []domain.Permission
+
+	token *jwt.Token
 }
 
-func (t Token) ID() string {
-	return t.String
+func newToken(token *jwt.Token, claims *authClaims) Token {
+	return Token{
+		String:      token.Raw,
+		Roles:       claims.Roles,
+		Permissions: PermissionsFromRoles(claims.Roles),
+		token:       token,
+	}
+}
+
+type authClaims struct {
+	Roles []domain.Role
+}
+
+func (c *authClaims) Valid() error {
+	return nil
+}
+
+func PermissionsFromRoles(roles []domain.Role) []domain.Permission {
+	perms := []domain.Permission{}
+	for _, role := range roles {
+		for _, perm := range role.Permissions {
+			if !slices.Contains(perms, perm) {
+				perms = append(perms, perm)
+			}
+		}
+	}
+	return perms
 }

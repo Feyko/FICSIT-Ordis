@@ -7,6 +7,10 @@ type OrdisConfig struct {
 
 type CommandsConfig struct{}
 
+type AuthConfig struct {
+	Secret string
+}
+
 type ArangoConfig struct {
 	Username,
 	Password,

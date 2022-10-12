@@ -1,7 +1,12 @@
 directive @isAuthenticated on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
-scalar AuthToken
+type Role {
+    name: String!
+    permissions: [Permission!]!
+}
 
-extend type Mutation {
-    revokeAuth(token: AuthToken): Boolean! @isAuthenticated
+enum Permission {
+    ContentEditing
+    TokenCreation
+    TicketManagement
 }
