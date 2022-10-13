@@ -3,9 +3,11 @@ package auth
 import (
 	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/domain/domain"
+	"context"
 	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
+	"strings"
 )
 
 func New(conf config.AuthConfig) (*Module, error) {
@@ -16,6 +18,37 @@ func New(conf config.AuthConfig) (*Module, error) {
 
 type Module struct {
 	secret []byte
+}
+
+func (m *Module) Authorize(ctx *context.Context, perms ...domain.Permission) error {
+	if ctx == nil || *ctx == nil {
+		return errors.New("nil context")
+	}
+
+	userToken := (*ctx).Value("ordis-user-token")
+	token, ok := userToken.(*Token)
+	if ok && token.HasPermissions(perms...) {
+		return nil
+	}
+
+	authorization := (*ctx).Value("Authorization")
+	tokenString, ok := authorization.(string)
+	if !ok {
+		return errors.New("invalid or missing Authorization header")
+	}
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
+	token = &Token{String: tokenString}
+	err := m.ValidateToken(token)
+	if err != nil {
+		return errors.Wrap(err, "invalid token")
+	}
+	*ctx = context.WithValue(*ctx, "ordis-user-token", token)
+	if !token.HasPermissions(perms...) {
+		return errors.New("insufficient permissions")
+	}
+
+	return nil
 }
 
 func (m *Module) NewToken(roles ...domain.Role) (Token, error) {
@@ -40,8 +73,18 @@ func (m *Module) ValidateToken(token *Token) error {
 	token.token = jwToken
 	if claims != nil {
 		token.Roles = claims.Roles
+		token.Permissions = PermissionsFromRoles(token.Roles)
 	}
 	return err
+}
+
+func newToken(token *jwt.Token, claims *authClaims) Token {
+	return Token{
+		String:      token.Raw,
+		Roles:       claims.Roles,
+		Permissions: PermissionsFromRoles(claims.Roles),
+		token:       token,
+	}
 }
 
 type Token struct {
@@ -52,13 +95,13 @@ type Token struct {
 	token *jwt.Token
 }
 
-func newToken(token *jwt.Token, claims *authClaims) Token {
-	return Token{
-		String:      token.Raw,
-		Roles:       claims.Roles,
-		Permissions: PermissionsFromRoles(claims.Roles),
-		token:       token,
+func (t *Token) HasPermissions(perms ...domain.Permission) bool {
+	for _, perm := range perms {
+		if !slices.Contains(t.Permissions, perm) {
+			return false
+		}
 	}
+	return true
 }
 
 type authClaims struct {
