@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-const adminToken = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJSb2xlcyI6W3siTmFtZSI6IkFkbWluIiwiUGVybWlzc2lvbnMiOlsiQ29udGVudEVkaXRpbmciLCJUb2tlbkNyZWF0aW9uIiwiVGlja2V0TWFuYWdlbWVudCJdfV19.xUdudgrgb98sL6gH2YwvjEDSALrkZunq-r8Uz2qy461pU_g7NqlSam2ZyCIrtG56yvxUE732CHX5pUUCQrUsNw"
+const adminToken = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJSb2xlSURzIjpbMV19.--kQQn4mF12neGr69Z47ZVol7BTeqSWVs3vujbXPAjDwAiMe-mbR1LqUyt4dXgrVAAcu_gzhaEXtaY1-ksv0uA"
 
 func TestAuthModuleTestSuite(t *testing.T) {
 	suite.Run(t, new(AuthModuleTestSuite))
@@ -74,11 +74,15 @@ func (s *AuthModuleTestSuite) TestTokenCorrectPermissionsOneRole() {
 }
 
 func (s *AuthModuleTestSuite) TestTokenCorrectPermissionsMultipleRoles() {
-	rolePermTickets := domain.Role{Permissions: []domain.Permission{domain.PermissionTicketManagement}}
-	rolePermContent := domain.Role{Permissions: []domain.Permission{domain.PermissionContentEditing}}
-	rolePermTokens := domain.Role{Permissions: []domain.Permission{domain.PermissionTokenCreation}}
-	allPerms := []domain.Permission{domain.PermissionContentEditing, domain.PermissionTokenCreation, domain.PermissionTicketManagement}
-	token, err := s.mod.NewToken(rolePermTickets, rolePermContent, rolePermTokens)
+	allPerms := []domain.Permission{domain.PermissionContentEditing, domain.PermissionTicketManagement}
+	domain.Roles[len(domain.Roles)] = domain.Role{ID: len(domain.Roles), Permissions: []domain.Permission{domain.PermissionContentEditing}}
+	domain.Roles[len(domain.Roles)] = domain.Role{ID: len(domain.Roles), Permissions: []domain.Permission{domain.PermissionTicketManagement}}
+	defer func() {
+		delete(domain.Roles, len(domain.Roles)-1)
+		delete(domain.Roles, len(domain.Roles)-1)
+	}()
+
+	token, err := s.mod.NewToken(domain.Roles[len(domain.Roles)-1], domain.Roles[len(domain.Roles)-2])
 	s.Require().NoError(err)
 	slices.Sort(token.Permissions)
 	slices.Sort(allPerms)
@@ -86,8 +90,11 @@ func (s *AuthModuleTestSuite) TestTokenCorrectPermissionsMultipleRoles() {
 }
 
 func (s *AuthModuleTestSuite) TestTokenHasPermission() {
-	role := domain.Role{Permissions: []domain.Permission{domain.PermissionTicketManagement}}
-	token, err := s.mod.NewToken(role)
+	domain.Roles[len(domain.Roles)] = domain.Role{ID: len(domain.Roles), Permissions: []domain.Permission{domain.PermissionTicketManagement}}
+	defer func() {
+		delete(domain.Roles, len(domain.Roles)-1)
+	}()
+	token, err := s.mod.NewToken(domain.Roles[len(domain.Roles)-1])
 	s.Require().NoError(err)
 	s.Require().True(token.HasPermissions(domain.PermissionTicketManagement))
 	s.Require().False(token.HasPermissions(domain.PermissionContentEditing))

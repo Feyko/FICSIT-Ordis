@@ -6,7 +6,6 @@ require (
 	github.com/99designs/gqlgen v0.17.20
 	github.com/arangodb/go-driver v1.4.0
 	github.com/fatih/structs v1.1.0
-	github.com/go-generics/collections v0.0.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.1

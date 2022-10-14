@@ -52,7 +52,7 @@ func (m *Module) Authorize(ctx *context.Context, perms ...domain.Permission) err
 }
 
 func (m *Module) NewToken(roles ...domain.Role) (Token, error) {
-	claims := &authClaims{roles}
+	claims := &authClaims{extractRoleIDs(roles)}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenString, err := token.SignedString(m.secret)
 	if err != nil {
@@ -72,17 +72,18 @@ func (m *Module) ValidateToken(token *Token) error {
 	})
 	token.token = jwToken
 	if claims != nil {
-		token.Roles = claims.Roles
+		token.Roles = rolesFromIDs(claims.RoleIDs)
 		token.Permissions = PermissionsFromRoles(token.Roles)
 	}
 	return err
 }
 
 func newToken(token *jwt.Token, claims *authClaims) Token {
+	roles := rolesFromIDs(claims.RoleIDs)
 	return Token{
 		String:      token.Raw,
-		Roles:       claims.Roles,
-		Permissions: PermissionsFromRoles(claims.Roles),
+		Roles:       roles,
+		Permissions: PermissionsFromRoles(roles),
 		token:       token,
 	}
 }
@@ -105,7 +106,7 @@ func (t *Token) HasPermissions(perms ...domain.Permission) bool {
 }
 
 type authClaims struct {
-	Roles []domain.Role
+	RoleIDs []int
 }
 
 func (c *authClaims) Valid() error {
@@ -122,4 +123,23 @@ func PermissionsFromRoles(roles []domain.Role) []domain.Permission {
 		}
 	}
 	return perms
+}
+
+func extractRoleIDs(roles []domain.Role) []int {
+	ids := make([]int, len(roles))
+	for i, role := range roles {
+		ids[i] = role.ID
+	}
+	return ids
+}
+
+func rolesFromIDs(ids []int) []domain.Role {
+	roles := make([]domain.Role, 0, len(ids))
+	for _, id := range ids {
+		role, ok := domain.Roles[id]
+		if ok {
+			roles = append(roles, role)
+		}
+	}
+	return roles
 }
