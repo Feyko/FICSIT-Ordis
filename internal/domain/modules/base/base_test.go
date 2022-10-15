@@ -1,6 +1,7 @@
 package base
 
 import (
+	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/repo"
@@ -63,7 +64,9 @@ func (s *ExampleModuleTestSuite) SetupSuite() {
 func (s *ExampleModuleTestSuite) SetupTest() {
 	collection, err := repos.CreateCollection[ExampleElement](s.rep, "Example")
 	s.Require().NoError(err)
-	s.mod = &ExampleModule{*New[ExampleElement](collection)}
+	authModule, err := auth.New(auth.Config{Secret: "test-secret"})
+	s.Require().NoError(err)
+	s.mod = &ExampleModule{*New[ExampleElement](NewDefaultConfigNoPerm(authModule), collection)}
 }
 
 func (s *ExampleModuleTestSuite) TearDownTest() {

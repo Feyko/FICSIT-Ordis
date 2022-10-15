@@ -4,6 +4,7 @@ import (
 	"FICSIT-Ordis/internal/domain/ordis"
 	"FICSIT-Ordis/internal/ports/gql/graph"
 	"FICSIT-Ordis/internal/ports/gql/graph/generated"
+	"github.com/go-chi/chi"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +21,10 @@ func Server(o *ordis.Ordis) error {
 		port = defaultPort
 	}
 
+	router := chi.NewRouter()
+
+	router.Use(o.Auth.Middleware())
+
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
 		Resolvers: &graph.Resolver{
 			O: o,
@@ -27,9 +32,9 @@ func Server(o *ordis.Ordis) error {
 		Directives: graph.Directives,
 	}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	return http.ListenAndServe(":"+port, nil)
+	return http.ListenAndServe(":"+port, router)
 }

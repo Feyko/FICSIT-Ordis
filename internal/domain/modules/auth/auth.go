@@ -1,16 +1,20 @@
 package auth
 
 import (
-	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/domain/domain"
 	"context"
 	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
+	"net/http"
 	"strings"
 )
 
-func New(conf config.AuthConfig) (*Module, error) {
+type Config struct {
+	Secret string
+}
+
+func New(conf Config) (*Module, error) {
 	return &Module{
 		secret: []byte(conf.Secret),
 	}, nil
@@ -20,6 +24,25 @@ type Module struct {
 	secret []byte
 }
 
+func (m *Module) Middleware() func(handler http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tokenString := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+			r = r.WithContext(CtxWithTokenString(r.Context(), tokenString))
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func CtxWithTokenString(ctx context.Context, token string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, "ordis-string-token", token)
+}
+
+// Authorize requires a valid JWT token passed through the context. Use CtxWithTokenString to pass a token.
+// Use Middleware for ease of use with http.
 func (m *Module) Authorize(ctx *context.Context, perms ...domain.Permission) error {
 	if ctx == nil || *ctx == nil {
 		return errors.New("nil context")
@@ -31,12 +54,11 @@ func (m *Module) Authorize(ctx *context.Context, perms ...domain.Permission) err
 		return nil
 	}
 
-	authorization := (*ctx).Value("Authorization")
+	authorization := (*ctx).Value("ordis-string-token")
 	tokenString, ok := authorization.(string)
 	if !ok {
-		return errors.New("invalid or missing Authorization header")
+		return errors.New("missing token string")
 	}
-	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
 
 	token = &Token{String: tokenString}
 	err := m.ValidateToken(token)

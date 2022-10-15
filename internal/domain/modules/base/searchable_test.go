@@ -1,6 +1,7 @@
 package base
 
 import (
+	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/repo"
@@ -38,7 +39,9 @@ func (s *SearchableTestSuite) SetupSuite() {
 func (s *SearchableTestSuite) SetupTest() {
 	collection, err := repos.CreateCollection[ExampleElement](s.rep, "Searchable")
 	s.Require().NoError(err)
-	s.mod = NewSearchable[ExampleElement](collection)
+	authModule, err := auth.New(auth.Config{Secret: "test-secret"})
+	s.Require().NoError(err)
+	s.mod = NewSearchable[ExampleElement](NewDefaultConfigNoPerm(authModule), collection)
 }
 
 func (s *SearchableTestSuite) TearDownTest() {

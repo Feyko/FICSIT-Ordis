@@ -1,15 +1,15 @@
 package main
 
 import (
-	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/domain/ordis"
 	"FICSIT-Ordis/internal/ports/gql"
+	"FICSIT-Ordis/internal/ports/repos/arango"
 	"log"
 )
 
 func main() {
-	conf := config.OrdisConfig{
-		Arango: config.ArangoConfig{
+	conf := ordis.Config{
+		Arango: arango.Config{
 			Username:      "ordis",
 			Password:      "pass",
 			SuperUsername: "root",

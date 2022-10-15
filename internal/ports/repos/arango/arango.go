@@ -1,7 +1,6 @@
 package arango
 
 import (
-	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/repo"
 	"context"
@@ -13,12 +12,21 @@ import (
 	"strings"
 )
 
+type Config struct {
+	Username,
+	Password,
+	SuperUsername,
+	SuperPassword,
+	DBName string
+	Endpoints []string
+}
+
 type Repository[T id.IDer] struct {
 	client driver.Client
 	db     driver.Database
 }
 
-func New[T id.IDer](conf config.ArangoConfig) (repo.Repository[T], error) {
+func New[T id.IDer](conf Config) (repo.Repository[T], error) {
 	repo := new(Repository[T])
 	client, err := connectClient(conf)
 	if err != nil {
@@ -45,7 +53,7 @@ func New[T id.IDer](conf config.ArangoConfig) (repo.Repository[T], error) {
 	return repo, nil
 }
 
-func connectClient(conf config.ArangoConfig) (driver.Client, error) {
+func connectClient(conf Config) (driver.Client, error) {
 	conn, err := http.NewConnection(http.ConnectionConfig{Endpoints: conf.Endpoints})
 	if err != nil {
 		return nil, errors.Wrap(err, "could not connect to the endpoint")
@@ -68,7 +76,7 @@ func connectClient(conf config.ArangoConfig) (driver.Client, error) {
 	return client, nil
 }
 
-func authCheck(client driver.Client, conf config.ArangoConfig) (bool, error) {
+func authCheck(client driver.Client, conf Config) (bool, error) {
 	_, err := client.DatabaseExists(nil, conf.DBName)
 	if driver.IsUnauthorized(err) {
 		return false, nil
@@ -79,7 +87,7 @@ func authCheck(client driver.Client, conf config.ArangoConfig) (bool, error) {
 	return true, nil
 }
 
-func superInit(conn driver.Connection, conf config.ArangoConfig) error {
+func superInit(conn driver.Connection, conf Config) error {
 	client, err := driver.NewClient(driver.ClientConfig{
 		Connection:     conn,
 		Authentication: driver.BasicAuthentication(conf.SuperUsername, conf.SuperPassword),

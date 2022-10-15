@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/domain/domain"
 	"context"
 	"github.com/stretchr/testify/suite"
@@ -21,7 +20,7 @@ type AuthModuleTestSuite struct {
 }
 
 func (s *AuthModuleTestSuite) SetupTest() {
-	mod, err := New(config.AuthConfig{Secret: "test-secret"})
+	mod, err := New(Config{Secret: "test-secret"})
 	s.Require().NoError(err)
 	s.mod = mod
 }
@@ -101,31 +100,25 @@ func (s *AuthModuleTestSuite) TestTokenHasPermission() {
 }
 
 func (s *AuthModuleTestSuite) TestAuthorize() {
-	ctx := context.WithValue(context.Background(), "Authorization", adminToken)
+	ctx := context.WithValue(context.Background(), "ordis-string-token", adminToken)
 	err := s.mod.Authorize(&ctx)
 	s.Require().NoError(err)
 }
 
 func (s *AuthModuleTestSuite) TestAuthorizePermissions() {
-	ctx := context.WithValue(context.Background(), "Authorization", adminToken)
-	err := s.mod.Authorize(&ctx, domain.PermissionTokenCreation)
-	s.Require().NoError(err)
-}
-
-func (s *AuthModuleTestSuite) TestAuthorizePermissionsBearer() {
-	ctx := context.WithValue(context.Background(), "Authorization", "Bearer "+adminToken)
+	ctx := context.WithValue(context.Background(), "ordis-string-token", adminToken)
 	err := s.mod.Authorize(&ctx, domain.PermissionTokenCreation)
 	s.Require().NoError(err)
 }
 
 func (s *AuthModuleTestSuite) TestAuthorizeWrongPermissions() {
-	ctx := context.WithValue(context.Background(), "Authorization", adminToken)
+	ctx := context.WithValue(context.Background(), "ordis-string-token", adminToken)
 	err := s.mod.Authorize(&ctx, "NonexistentPermission")
 	s.Require().Error(err)
 }
 
 func (s *AuthModuleTestSuite) TestReauthorize() {
-	ctx := context.WithValue(context.Background(), "Authorization", adminToken)
+	ctx := context.WithValue(context.Background(), "ordis-string-token", adminToken)
 	err := s.mod.Authorize(&ctx, domain.PermissionTokenCreation)
 	s.Require().NoError(err)
 	err = s.mod.Authorize(&ctx, domain.PermissionTokenCreation)
@@ -133,7 +126,7 @@ func (s *AuthModuleTestSuite) TestReauthorize() {
 }
 
 func (s *AuthModuleTestSuite) TestReauthorizeWrongPermissions() {
-	ctx := context.WithValue(context.Background(), "Authorization", adminToken)
+	ctx := context.WithValue(context.Background(), "ordis-string-token", adminToken)
 	err := s.mod.Authorize(&ctx, "NonexistentPermission")
 	s.Require().Error(err)
 	err = s.mod.Authorize(&ctx, "NonexistentPermission")

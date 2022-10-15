@@ -1,7 +1,7 @@
 package ordis
 
 import (
-	"FICSIT-Ordis/internal/config"
+	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/domain/modules/commands"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/arango"
@@ -10,19 +10,38 @@ import (
 
 type Ordis struct {
 	Commands *commands.Module
+	Auth     *auth.Module
 }
 
-func New(conf config.OrdisConfig) (Ordis, error) {
+type Config struct {
+	Arango   arango.Config
+	Commands commands.Config
+}
+
+func New(conf Config) (Ordis, error) {
+	authModule, err := auth.New(auth.Config{
+		Secret: "test-secret",
+	})
+	if err != nil {
+		return Ordis{}, errors.Wrap(err, "could not create the auth module")
+	}
+
 	repo, err := arango.New[id.IDer](conf.Arango)
 	if err != nil {
 		return Ordis{}, errors.Wrap(err, "could not create the repository")
 	}
 
-	commandsModule, err := commands.New(conf.Commands, repo)
+	commandsConfig := conf.Commands
+	if commandsConfig.Auth == nil {
+		commandsConfig.Auth = authModule
+	}
+	commandsModule, err := commands.New(commandsConfig, repo)
 	if err != nil {
 		return Ordis{}, errors.Wrap(err, "could not create the commands module")
 	}
+
 	return Ordis{
 		Commands: commandsModule,
+		Auth:     authModule,
 	}, nil
 }

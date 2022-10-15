@@ -1,7 +1,6 @@
 package test
 
 import (
-	"FICSIT-Ordis/internal/config"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/arango"
 	"FICSIT-Ordis/internal/ports/repos/memrepo"
@@ -17,7 +16,7 @@ func GetRepo() (repo.Repository[id.IDer], error) {
 	if arangoUser == "" || arangoPassword == "" || arangoEndpoint == "" {
 		return memrepo.New(), nil
 	}
-	arangoRepo, err := arango.New[id.IDer](config.ArangoConfig{
+	arangoRepo, err := arango.New[id.IDer](arango.Config{
 		Username:      arangoUser,
 		Password:      arangoPassword,
 		SuperUsername: arangoUser,
