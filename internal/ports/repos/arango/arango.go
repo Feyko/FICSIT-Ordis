@@ -167,7 +167,7 @@ return doc`
 		return *new(T), errors.Wrap(err, "could not read the document")
 	}
 	if len(elements) == 0 {
-		return *new(T), errors.Errorf("could not find the element with ID %v", ID)
+		return *new(T), repo.ErrElementNotFound
 	}
 	return elements[0], nil
 }
@@ -177,6 +177,14 @@ func (c *Collection[T]) GetAll(ctx context.Context) ([]T, error) {
 }
 
 func (c *Collection[T]) Create(ctx context.Context, element T) error {
+	_, err := c.Get(ctx, element.ID())
+	if err == nil {
+		return errors.Errorf("element with ID '%v' already exists", element.ID())
+	}
+	if !errors.Is(err, repo.ErrElementNotFound) {
+		return errors.Wrap(err, "error checking existing element")
+	}
+
 	asMap, err := id.ToMap(element)
 	if err != nil {
 		return errors.Wrap(err, "could not turn the element into a map")

@@ -1,9 +1,12 @@
 package repo
 
-type CollectionNotFoundError struct{}
+type Error string
 
-func (c CollectionNotFoundError) Error() string {
-	return "collection not found"
+func (e Error) Error() string {
+	return string(e)
 }
 
-var ErrCollectionNotFound CollectionNotFoundError
+var (
+	ErrCollectionNotFound Error = "collection not found"
+	ErrElementNotFound    Error = "element not found"
+)
