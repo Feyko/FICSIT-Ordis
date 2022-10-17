@@ -13,7 +13,8 @@ import (
 )
 
 type Config struct {
-	Auth *auth.Module
+	Auth   *auth.Module
+	NoAuth bool
 }
 
 func New[T id.IDer](conf Config, repository repo.Repository[T]) (*Module, error) {
@@ -21,8 +22,12 @@ func New[T id.IDer](conf Config, repository repo.Repository[T]) (*Module, error)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get or create the collection")
 	}
+	baseConf := base.NewDefaultConfig(conf.Auth)
+	if conf.NoAuth {
+		baseConf = base.NewDefaultConfigNoPerm(nil)
+	}
 	return &Module{
-		*base.NewSearchable[domain.Command](base.NewDefaultConfig(conf.Auth), collection),
+		*base.NewSearchable[domain.Command](baseConf, collection),
 	}, nil
 }
 
@@ -51,4 +56,38 @@ func (m *Module) Get(ctx context.Context, name string) (*domain.Command, error) 
 		return nil, errors.Errorf("command '%v' has multiple entries", name)
 	}
 	return &cmds[0], nil
+}
+
+func (m *Module) Create(ctx context.Context, command domain.Command) error {
+	err := m.ensureDoesntExist(ctx, command)
+	if err != nil {
+		return err
+	}
+
+	return m.Module.Create(ctx, command)
+}
+
+func (m *Module) ensureDoesntExist(ctx context.Context, cmd domain.Command) error {
+	err := m.checkCommandNameDoesntExist(ctx, cmd.Name)
+	if err != nil {
+		return err
+	}
+	for _, alias := range cmd.Aliases {
+		err = m.checkCommandNameDoesntExist(ctx, alias)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Module) checkCommandNameDoesntExist(ctx context.Context, name string) error {
+	found, err := m.Search(ctx, name)
+	if err != nil {
+		return errors.Wrap(err, "error checking existing commands")
+	}
+	if len(found) > 0 {
+		return errors.Errorf("command %v already exists", name)
+	}
+	return nil
 }

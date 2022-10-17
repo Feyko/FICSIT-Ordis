@@ -33,7 +33,7 @@ func (r *Repository[T]) CreateCollection(name string) (any, error) {
 func (r *Repository[T]) GetCollection(name string) (any, error) {
 	collection, ok := r.collections[name]
 	if !ok {
-		return nil, errors.New("collection not found")
+		return nil, repo.ErrCollectionNotFound
 	}
 	typed, ok := collection.(repo.Collection[T])
 	if !ok {
