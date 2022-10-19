@@ -1,5 +1,3 @@
-directive @isAuthenticated on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
-
 type Role {
     id: Int!
     name: String!

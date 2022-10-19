@@ -22,6 +22,8 @@ input CrashUpdate {
 type CrashMatch {
     matchedText: String!
     response: Response!
+    lineSpan: Span!
+    charSpan: Span!
 }
 
 extend type Query {
@@ -31,7 +33,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createCrash(Crash: CrashCreation!): Crash! @isAuthenticated
-    updateCrash(Crash: CrashUpdate!): Crash @isAuthenticated
-    deleteCrash(name: String!): Boolean! @isAuthenticated
+    createCrash(Crash: CrashCreation!): Crash!
+    updateCrash(Crash: CrashUpdate!): Crash
+    deleteCrash(name: String!): Boolean!
 }

@@ -16,14 +16,14 @@ input CommandUpdate {
     aliases: [String!]
 }
 
-type Query {
+extend type Query {
     listAllCommands: [Command!]!
     findCommand(name: String!): Command
     executeCommand(text: String!): Response
 }
 
-type Mutation {
-    createCommand(command: CommandCreation!): Command! @isAuthenticated
-    updateCommand(name: String!, command: CommandUpdate!): Command @isAuthenticated
-    deleteCommand(name: String!): Boolean! @isAuthenticated
+extend type Mutation {
+    createCommand(command: CommandCreation!): Command!
+    updateCommand(name: String!, command: CommandUpdate!): Command
+    deleteCommand(name: String!): Boolean!
 }

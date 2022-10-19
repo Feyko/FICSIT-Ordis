@@ -1,3 +1,6 @@
+type Query {}
+type Mutation {}
+
 type Response {
     text: String
     mediaLinks: [String!]!
@@ -6,4 +9,9 @@ type Response {
 input ResponseInput {
     text: String
     mediaLinks: [String!]!
+}
+
+type Span {
+    start: Int!
+    end: Int!
 }
