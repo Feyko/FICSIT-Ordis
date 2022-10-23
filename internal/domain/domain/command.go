@@ -11,7 +11,7 @@ func (elem Command) ID() string {
 }
 
 func (elem Command) SearchFields() []string {
-	return []string{"Name", "Response"}
+	return []string{"Name", "Response", "Aliases"}
 }
 
 type CommandUpdate struct {

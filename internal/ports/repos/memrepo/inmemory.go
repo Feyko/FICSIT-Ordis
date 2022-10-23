@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
 	"reflect"
-	"strings"
 )
 
 func New() repo.Repository[id.IDer] {
@@ -83,20 +82,29 @@ func (repo *Collection[T]) Search(ctx context.Context, search string, fields []s
 		reflected := reflect.ValueOf(e)
 		if reflected.Kind() != reflect.Struct {
 			if reflected.Kind() == reflect.String {
-				if strings.Contains(reflected.String(), search) {
+				if reflected.String() == search {
 					r = append(r, e)
 					continue
 				}
 			}
 			return nil, errors.New("trying to search an invalid type. Search only supports structs and strings")
 		}
+
 		for _, fieldName := range fields {
 			field := reflected.FieldByName(fieldName)
-			if field.IsZero() { // This can skip valid values.. let's hope it doesn't. IDer hate Go's zero value thing
-				continue
+			if field.Kind() == reflect.Array || field.Kind() == reflect.Slice {
+				fieldLen := field.Len()
+				for i := 0; i < fieldLen; i++ {
+					fieldValue := field.Index(i)
+					fieldString := fieldValue.String()
+					if fieldString == search {
+						r = append(r, e)
+						continue
+					}
+				}
 			}
-			fieldString := field.String() // Might be too broad and a bad fix for "deep" search
-			if strings.Contains(fieldString, search) {
+			fieldString := field.String() // Might be too broad
+			if fieldString == search {
 				r = append(r, e)
 			}
 		}
