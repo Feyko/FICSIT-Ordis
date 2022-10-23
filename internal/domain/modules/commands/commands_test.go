@@ -52,7 +52,7 @@ func (s *CommandsModuleTestSuite) setupTest(noAuth bool) {
 
 var defaultCommand = domain.Command{
 	Name:    "default",
-	Aliases: nil,
+	Aliases: []string{"defaultalias"},
 	Response: domain.Response{
 		Text:       "Text",
 		MediaLinks: []string{"https://SomeLink"},
@@ -64,10 +64,15 @@ func (s *CommandsModuleTestSuite) TearDownTest() {
 	s.Require().NoError(err)
 }
 
+func (s *CommandsModuleTestSuite) TestGetByAlias() {
+	_, err := s.mod.Get(nil, "defaultalias")
+	s.Require().NoError(err)
+}
+
 func (s *CommandsModuleTestSuite) TestCreateUniqueAliasName() {
 	err := s.mod.Create(nil, domain.Command{
-		Name:    "default",
-		Aliases: []string{"uniquealias"},
+		Name:    "uniquename",
+		Aliases: []string{"defaultalias"},
 	})
 	s.Require().Error(err)
 }
@@ -78,4 +83,15 @@ func (s *CommandsModuleTestSuite) TestCreateUniqueAliasAlias() {
 		Aliases: []string{"default"},
 	})
 	s.Require().Error(err)
+}
+
+func (s *CommandsModuleTestSuite) TestCreateCommandsSimilarName() {
+	err := s.mod.Create(nil, domain.Command{
+		Name: "ayo",
+	})
+	s.Require().NoError(err)
+	err = s.mod.Create(nil, domain.Command{
+		Name: "ayooo",
+	})
+	s.Require().NoError(err)
 }
