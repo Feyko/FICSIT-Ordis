@@ -67,6 +67,15 @@ func (m *Module) Create(ctx context.Context, command domain.Command) error {
 	return m.Module.Create(ctx, command)
 }
 
+func (m *Module) Delete(ctx context.Context, name string) error {
+	cmd, err := m.Get(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	return m.Module.Delete(ctx, cmd.ID())
+}
+
 func (m *Module) ensureDoesntExist(ctx context.Context, cmd domain.Command) error {
 	err := m.checkCommandNameDoesntExist(ctx, cmd.Name)
 	if err != nil {

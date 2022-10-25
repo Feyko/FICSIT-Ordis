@@ -95,3 +95,8 @@ func (s *CommandsModuleTestSuite) TestCreateCommandsSimilarName() {
 	})
 	s.Require().NoError(err)
 }
+
+func (s *CommandsModuleTestSuite) TestDeleteByAlias() {
+	err := s.mod.Delete(nil, "defaultalias")
+	s.Require().NoError(err)
+}

@@ -213,12 +213,16 @@ func (c *Collection[T]) Update(ctx context.Context, ID string, updateElement any
 func (c *Collection[T]) Delete(ctx context.Context, ID string) error {
 	query :=
 		`filter doc.id == @id
-remove doc in @@coll`
-	_, err := runQueryInCollection(ctx, c, query, map[string]interface{}{
+remove doc in @@coll
+return OLD`
+	cur, err := runQueryInCollectionCursor(ctx, c, query, map[string]interface{}{
 		"id": ID,
 	})
 	if err != nil {
 		return errors.Wrap(err, "could not delete the element")
+	}
+	if cur.Count() == 0 {
+		return errors.New("element does not exist")
 	}
 	return nil
 }
@@ -254,7 +258,7 @@ func (c *Collection[T]) Search(ctx context.Context, search string, fields []stri
 	return runQueryInCollection(ctx, c, query, params)
 }
 
-func runQueryInCollection[T id.IDer](ctx context.Context, coll *Collection[T], query string, params map[string]any) ([]T, error) {
+func runQueryInCollectionCursor[T id.IDer](ctx context.Context, coll *Collection[T], query string, params map[string]any) (driver.Cursor, error) {
 	if params == nil {
 		params = make(map[string]any)
 	}
@@ -265,7 +269,15 @@ func runQueryInCollection[T id.IDer](ctx context.Context, coll *Collection[T], q
 	if err != nil {
 		return nil, errors.Wrap(err, "could not query the database")
 	}
-	return flattenCursor[T](ctx, cursor)
+	return cursor, nil
+}
+
+func runQueryInCollection[T id.IDer](ctx context.Context, coll *Collection[T], query string, params map[string]any) ([]T, error) {
+	cur, err := runQueryInCollectionCursor(ctx, coll, query, params)
+	if err != nil {
+		return nil, err
+	}
+	return flattenCursor[T](ctx, cur)
 }
 
 func flattenCursor[T id.IDer](ctx context.Context, cursor driver.Cursor) ([]T, error) {

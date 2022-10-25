@@ -206,3 +206,8 @@ func (s *ExampleModuleTestSuite) TestUpdate() {
 
 	assert.Equal(t, expected, cmd, "ExampleElement was not updated")
 }
+
+func (s *ExampleModuleTestSuite) TestDeleteNonExistentElemErrors() {
+	err := s.mod.Delete(nil, "doesntexist")
+	s.Require().Error(err)
+}
