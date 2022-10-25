@@ -69,12 +69,6 @@ func (r *commandUpdateResolver) Response(ctx context.Context, obj *domain.Comman
 	return nil
 }
 
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
-// Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
 // CommandCreation returns generated.CommandCreationResolver implementation.
 func (r *Resolver) CommandCreation() generated.CommandCreationResolver {
 	return &commandCreationResolver{r}
@@ -83,7 +77,5 @@ func (r *Resolver) CommandCreation() generated.CommandCreationResolver {
 // CommandUpdate returns generated.CommandUpdateResolver implementation.
 func (r *Resolver) CommandUpdate() generated.CommandUpdateResolver { return &commandUpdateResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
 type commandCreationResolver struct{ *Resolver }
 type commandUpdateResolver struct{ *Resolver }

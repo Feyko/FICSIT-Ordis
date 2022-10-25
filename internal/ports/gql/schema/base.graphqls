@@ -1,5 +1,6 @@
-type Query {}
-type Mutation {}
+type Query
+
+type Mutation
 
 type Response {
     text: String
