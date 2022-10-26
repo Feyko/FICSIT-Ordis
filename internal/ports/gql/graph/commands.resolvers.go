@@ -24,12 +24,12 @@ func (r *mutationResolver) UpdateCommand(ctx context.Context, name string, comma
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not find command '%v'", name)
 	}
-	newCommand, err := r.O.Commands.Update(nil, cmd.ID(), command)
+	newCommand, err := r.O.Commands.Update(ctx, cmd.ID(), command)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not update the command")
 	}
 
-	return &newCommand, nil
+	return newCommand, nil
 }
 
 // DeleteCommand is the resolver for the deleteCommand field.

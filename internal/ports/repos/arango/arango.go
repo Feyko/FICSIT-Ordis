@@ -3,6 +3,7 @@ package arango
 import (
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/repo"
+	"FICSIT-Ordis/internal/util"
 	"context"
 	"fmt"
 	"github.com/arangodb/go-driver"
@@ -308,8 +309,7 @@ func buildUpdateQuery[T any](element T, collParam, elemParam string) string {
 			continue
 		}
 		fieldV := v.Field(i)
-		kind := fieldV.Kind()
-		if (kind == reflect.Pointer || kind == reflect.Interface) && fieldV.IsNil() {
+		if util.IsNilable(fieldV) && fieldV.IsNil() {
 			continue
 		}
 		fieldNames = append(fieldNames, field.Name)

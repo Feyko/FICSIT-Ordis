@@ -100,3 +100,11 @@ func (s *CommandsModuleTestSuite) TestDeleteByAlias() {
 	err := s.mod.Delete(nil, "defaultalias")
 	s.Require().NoError(err)
 }
+
+func (s *CommandsModuleTestSuite) TestUpdateByAlias() {
+	expected := &defaultCommand
+	expected.Name = "newname"
+	updated, err := s.mod.Update(nil, "defaultalias", domain.CommandUpdate{Name: &expected.Name})
+	s.Require().NoError(err)
+	s.Require().Equal(expected, updated)
+}

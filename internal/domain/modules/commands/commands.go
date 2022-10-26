@@ -67,6 +67,15 @@ func (m *Module) Create(ctx context.Context, command domain.Command) error {
 	return m.Module.Create(ctx, command)
 }
 
+func (m *Module) Update(ctx context.Context, name string, updateElement any) (*domain.Command, error) {
+	cmd, err := m.Get(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	updated, err := m.Module.Update(ctx, cmd.ID(), updateElement)
+	return &updated, err
+}
+
 func (m *Module) Delete(ctx context.Context, name string) error {
 	cmd, err := m.Get(ctx, name)
 	if err != nil {
