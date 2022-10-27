@@ -5,15 +5,22 @@ package graph
 
 import (
 	"context"
-	"fmt"
 )
 
 // SetLatestInformation is the resolver for the setLatestInformation field.
 func (r *mutationResolver) SetLatestInformation(ctx context.Context, info string) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	err := r.O.Information.Set(ctx, info)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // GetLatestInformation is the resolver for the getLatestInformation field.
-func (r *queryResolver) GetLatestInformation(ctx context.Context) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) GetLatestInformation(ctx context.Context) (*string, error) {
+	info, err := r.O.Information.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return info, nil
 }

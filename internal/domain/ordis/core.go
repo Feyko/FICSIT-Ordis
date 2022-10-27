@@ -3,19 +3,22 @@ package ordis
 import (
 	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/domain/modules/commands"
+	"FICSIT-Ordis/internal/domain/modules/information"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/arango"
 	"github.com/pkg/errors"
 )
 
 type Ordis struct {
-	Commands *commands.Module
-	Auth     *auth.Module
+	Commands    *commands.Module
+	Auth        *auth.Module
+	Information *information.Module
 }
 
 type Config struct {
-	Arango   arango.Config
-	Commands commands.Config
+	Arango      arango.Config
+	Commands    commands.Config
+	Information information.Config
 }
 
 func New(conf Config) (Ordis, error) {
@@ -35,13 +38,25 @@ func New(conf Config) (Ordis, error) {
 	if commandsConfig.Auth == nil {
 		commandsConfig.Auth = authModule
 	}
+
 	commandsModule, err := commands.New(commandsConfig, repo)
 	if err != nil {
 		return Ordis{}, errors.Wrap(err, "could not create the commands module")
 	}
 
+	infoConfig := conf.Information
+	if infoConfig.Auth == nil {
+		infoConfig.Auth = authModule
+	}
+
+	infoModule, err := information.New(infoConfig, repo)
+	if err != nil {
+		return Ordis{}, errors.Wrap(err, "could not create the commands module")
+	}
+
 	return Ordis{
-		Commands: commandsModule,
-		Auth:     authModule,
+		Commands:    commandsModule,
+		Auth:        authModule,
+		Information: infoModule,
 	}, nil
 }
