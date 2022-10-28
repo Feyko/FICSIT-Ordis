@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+type AuthedConfig struct {
+	NoAuth     bool
+	AuthModule *Module
+}
+
 type Config struct {
 	Secret string
 }

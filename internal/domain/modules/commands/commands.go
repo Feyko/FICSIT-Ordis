@@ -13,8 +13,7 @@ import (
 )
 
 type Config struct {
-	Auth   *auth.Module
-	NoAuth bool
+	auth.AuthedConfig
 }
 
 func New[T id.IDer](conf Config, repository repo.Repository[T]) (*Module, error) {
@@ -22,7 +21,7 @@ func New[T id.IDer](conf Config, repository repo.Repository[T]) (*Module, error)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get or create the collection")
 	}
-	baseConf := base.NewDefaultConfig(conf.Auth)
+	baseConf := base.NewDefaultConfig(conf.AuthModule)
 	if conf.NoAuth {
 		baseConf = base.NewDefaultConfigNoPerm(nil)
 	}

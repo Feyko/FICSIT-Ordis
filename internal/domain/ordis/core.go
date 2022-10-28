@@ -17,14 +17,13 @@ type Ordis struct {
 
 type Config struct {
 	Arango      arango.Config
+	Auth        auth.Config
 	Commands    commands.Config
 	Information information.Config
 }
 
 func New(conf Config) (Ordis, error) {
-	authModule, err := auth.New(auth.Config{
-		Secret: "test-secret",
-	})
+	authModule, err := auth.New(conf.Auth)
 	if err != nil {
 		return Ordis{}, errors.Wrap(err, "could not create the auth module")
 	}
@@ -34,24 +33,18 @@ func New(conf Config) (Ordis, error) {
 		return Ordis{}, errors.Wrap(err, "could not create the repository")
 	}
 
-	commandsConfig := conf.Commands
-	if commandsConfig.Auth == nil {
-		commandsConfig.Auth = authModule
-	}
+	fillAuthConfig(authModule, &conf.Commands.AuthedConfig)
 
-	commandsModule, err := commands.New(commandsConfig, repo)
+	commandsModule, err := commands.New(conf.Commands, repo)
 	if err != nil {
 		return Ordis{}, errors.Wrap(err, "could not create the commands module")
 	}
 
-	infoConfig := conf.Information
-	if infoConfig.Auth == nil {
-		infoConfig.Auth = authModule
-	}
+	fillAuthConfig(authModule, &conf.Information.AuthedConfig)
 
-	infoModule, err := information.New(infoConfig, repo)
+	infoModule, err := information.New(conf.Information, repo)
 	if err != nil {
-		return Ordis{}, errors.Wrap(err, "could not create the commands module")
+		return Ordis{}, errors.Wrap(err, "could not create the information module")
 	}
 
 	return Ordis{
@@ -59,4 +52,10 @@ func New(conf Config) (Ordis, error) {
 		Auth:        authModule,
 		Information: infoModule,
 	}, nil
+}
+
+func fillAuthConfig(module *auth.Module, conf *auth.AuthedConfig) {
+	if conf.AuthModule == nil {
+		conf.AuthModule = module
+	}
 }
