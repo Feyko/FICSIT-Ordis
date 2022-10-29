@@ -2,8 +2,7 @@ package gql
 
 import (
 	"FICSIT-Ordis/internal/domain/ordis"
-	"FICSIT-Ordis/internal/ports/gql/graph"
-	"FICSIT-Ordis/internal/ports/gql/graph/generated"
+	"FICSIT-Ordis/internal/ports/gql/generated"
 	"github.com/go-chi/chi"
 	"log"
 	"net/http"
@@ -26,10 +25,10 @@ func Server(o *ordis.Ordis) error {
 	router.Use(o.Auth.Middleware())
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
-		Resolvers: &graph.Resolver{
+		Resolvers: &Resolver{
 			O: o,
 		},
-		Directives: graph.Directives,
+		Directives: Directives,
 	}))
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))

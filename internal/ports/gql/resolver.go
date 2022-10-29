@@ -1,8 +1,8 @@
-package graph
+package gql
 
 import (
 	"FICSIT-Ordis/internal/domain/ordis"
-	"FICSIT-Ordis/internal/ports/gql/graph/generated"
+	"FICSIT-Ordis/internal/ports/gql/generated"
 )
 
 // This file will not be regenerated automatically.

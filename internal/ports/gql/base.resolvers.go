@@ -1,10 +1,10 @@
-package graph
+package gql
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
-	"FICSIT-Ordis/internal/ports/gql/graph/generated"
+	"FICSIT-Ordis/internal/ports/gql/generated"
 )
 
 // Mutation returns generated.MutationResolver implementation.
