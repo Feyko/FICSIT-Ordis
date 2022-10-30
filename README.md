@@ -5,9 +5,8 @@ Helper and ticket manager backend for the Satisfactory Modding community meant t
 
 ### Prerequisites
 - Install Go 1.18+
-- Run `go generate -x ./...` 
-  - The command will error. You will have to go to the mentioned file and replace the `errors` import by `github.com/pkg/errors`. This is an issue with gqlgen but I will implement a workaround
-- Have an Arango database (docker-compose file provided)
+- Run `go generate -x ./...`
+- Have an Arango database (docker-compose file provided, compatible with default config)
 
 ### Running
 Configure the following env vars  
@@ -15,13 +14,14 @@ You can use the env var `ORDIS_USE_DEFAULT_CONFIG` with a truthy value to pull t
 
 |             Name            | Optional |        Default        |
 |:---------------------------:|:--------:|:---------------------:|
-| ORDIS_ARANGO_USERNAME       |    no    |         ordis         |
-| ORDIS_ARANGO_PASSWORD       |    no    |          pass         |
+|    ORDIS_ARANGO_USERNAME    |    no    |         ordis         |
+|    ORDIS_ARANGO_PASSWORD    |    no    |          pass         |
 | ORDIS_ARANGO_SUPER_USERNAME |    yes   |          root         |
 | ORDIS_ARANGO_SUPER_PASSWORD |    yes   |          pass         |
-| ORDIS_ARANGO_DB_NAME        |    no    |         ordis         |
-| ORDIS_ARANGO_DB_ENDPOINT    |    no    | http://localhost:8259 |
-| ORDIS_ARANGO_AUTH_SECRET    |    no    |       notsecret       |
+|     ORDIS_ARANGO_DB_NAME    |    no    |         ordis         |
+|   ORDIS_ARANGO_DB_ENDPOINT  |    no    | http://localhost:8259 |
+|   ORDIS_ARANGO_AUTH_SECRET  |    no    |       notsecret       |
+|        ORDIS_GQL_PORT       |    yes   |          8080         |
 
 Then simply run `go run cmd/ordis`
 
