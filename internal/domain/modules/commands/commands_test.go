@@ -39,8 +39,10 @@ func (s *CommandsModuleTestSuite) setupTest(noAuth bool) {
 
 	mod, err := New(
 		Config{
-			Auth:   authModule,
-			NoAuth: noAuth,
+			AuthedConfig: auth.AuthedConfig{
+				AuthModule:   authModule,
+				NoAuth: noAuth,
+			},
 		}, s.rep)
 	s.Require().NoError(err)
 
