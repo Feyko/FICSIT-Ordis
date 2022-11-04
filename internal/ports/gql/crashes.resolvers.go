@@ -37,13 +37,14 @@ func (r *queryResolver) FindCrash(ctx context.Context, name string) (*domain.Cra
 }
 
 // CrashAnalysis is the resolver for the crashAnalysis field.
-func (r *queryResolver) CrashAnalysis(ctx context.Context, text string) ([]model.CrashMatch, error) {
+func (r *queryResolver) CrashAnalysis(ctx context.Context, text string) ([]domain.CrashMatch, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
 // Response is the resolver for the response field.
 func (r *crashUpdateResolver) Response(ctx context.Context, obj *domain.CrashUpdate, data *model.ResponseInput) error {
-	panic(fmt.Errorf("not implemented: Response - response"))
+	*data = model.ResponseInput(*obj.Response)
+	return nil
 }
 
 // CrashUpdate returns generated.CrashUpdateResolver implementation.

@@ -64,7 +64,7 @@ func (r *commandCreationResolver) Response(ctx context.Context, obj *model.Comma
 // Response is the resolver for the response field.
 func (r *commandUpdateResolver) Response(ctx context.Context, obj *domain.CommandUpdate, data *model.ResponseInput) error {
 	obj.Response = &domain.ResponseUpdate{
-		Text:       &data.Text,
+		Text:       data.Text,
 		MediaLinks: data.MediaLinks,
 	}
 	return nil

@@ -1,13 +1,13 @@
 type Crash {
     name: String!
-    description: String!
+    description: String
     regexes: [String!]!
     response: Response!
 }
 
 input CrashCreation {
     name: String!
-    description: String!
+    description: String
     regexes: [String!]!
     response: ResponseInput!
 }
@@ -21,8 +21,7 @@ input CrashUpdate {
 
 type CrashMatch {
     matchedText: String!
-    response: Response!
-    lineSpan: Span!
+    crash: Crash!
     charSpan: Span!
 }
 

@@ -52,12 +52,14 @@ func (s *CrashesModuleTestSuite) setupTest(noAuth bool) {
 	s.Require().NoError(err)
 }
 
+var defaultText = "Text"
+var defaultDescription = "Default description"
 var defaultCrash = domain.Crash{
-	Name:    "default",
-	Description: "Default description",
-	Response: &domain.Response{
-		Text:       "Text",
-		MediaLinks: []string{"https://SomeLink"},
+	Name:        "default",
+	Description: &defaultDescription,
+	Response: domain.Response{
+		Text:       &defaultText,
+		MediaLinks: []string{"https://link.com"},
 	},
 	Regexes: []string{"default"},
 }
@@ -67,7 +69,43 @@ func (s *CrashesModuleTestSuite) TearDownTest() {
 	s.Require().NoError(err)
 }
 
-func (s *CrashesModuleTestSuite) TestGetByAlias() {
-	_, err := s.mod.Get(nil, "defaultalias")
-	s.Require().NoError(err)
+func (s *CrashesModuleTestSuite) TestCreateInvalidRegex() {
+	crash := defaultCrash
+	crash.Regexes = []string{"[ invalid"}
+
+	err := s.mod.Create(nil, crash)
+	s.Require().Error(err)
+}
+
+func (s *CrashesModuleTestSuite) TestCreateInvalidLink() {
+	crash := defaultCrash
+	crash.Response.MediaLinks = []string{"notalink"}
+
+	err := s.mod.Create(nil, crash)
+	s.Require().Error(err)
+}
+
+func (s *CrashesModuleTestSuite) TestCreateNoRegex() {
+	crash := defaultCrash
+	crash.Regexes = []string{}
+
+	err := s.mod.Create(nil, crash)
+	s.Require().Error(err)
+}
+
+func (s *CrashesModuleTestSuite) TestCreateEmptyResponse() {
+	crash := defaultCrash
+	crash.Response = domain.Response{}
+
+	err := s.mod.Create(nil, crash)
+	s.Require().Error(err)
+}
+
+func (s *CrashesModuleTestSuite) TestCreateResponseEmptyText() {
+	crash := defaultCrash
+	empty := ""
+	crash.Response = domain.Response{Text: &empty}
+
+	err := s.mod.Create(nil, crash)
+	s.Require().Error(err)
 }
