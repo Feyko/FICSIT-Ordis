@@ -40,8 +40,8 @@ func (s *CommandsModuleTestSuite) setupTest(noAuth bool) {
 	mod, err := New(
 		Config{
 			AuthedConfig: auth.AuthedConfig{
-				AuthModule:   authModule,
-				NoAuth: noAuth,
+				AuthModule: authModule,
+				NoAuth:     noAuth,
 			},
 		}, s.rep)
 	s.Require().NoError(err)
@@ -52,11 +52,12 @@ func (s *CommandsModuleTestSuite) setupTest(noAuth bool) {
 	s.Require().NoError(err)
 }
 
+var defaultText = "Text"
 var defaultCommand = domain.Command{
 	Name:    "default",
 	Aliases: []string{"defaultalias"},
 	Response: domain.Response{
-		Text:       "Text",
+		Text:       &defaultText,
 		MediaLinks: []string{"https://SomeLink"},
 	},
 }
