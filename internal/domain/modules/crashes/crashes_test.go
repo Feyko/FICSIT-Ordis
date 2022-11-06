@@ -64,13 +64,28 @@ var defaultCrash = domain.Crash{
 	Regexes: []string{"default"},
 }
 
+var otherCrash = domain.Crash{
+	Name:        "other",
+	Description: &defaultDescription,
+	Response: domain.Response{
+		Text:       &defaultText,
+		MediaLinks: []string{"https://link.com"},
+	},
+	Regexes: []string{"other"},
+}
+
 func (s *CrashesModuleTestSuite) TearDownTest() {
 	err := s.rep.DeleteCollection("Crashes")
 	s.Require().NoError(err)
 }
 
+func (s *CrashesModuleTestSuite) TestCreate() {
+	err := s.mod.Create(nil, otherCrash)
+	s.Require().NoError(err)
+}
+
 func (s *CrashesModuleTestSuite) TestCreateInvalidRegex() {
-	crash := defaultCrash
+	crash := otherCrash
 	crash.Regexes = []string{"[ invalid"}
 
 	err := s.mod.Create(nil, crash)
@@ -78,7 +93,7 @@ func (s *CrashesModuleTestSuite) TestCreateInvalidRegex() {
 }
 
 func (s *CrashesModuleTestSuite) TestCreateInvalidLink() {
-	crash := defaultCrash
+	crash := otherCrash
 	crash.Response.MediaLinks = []string{"notalink"}
 
 	err := s.mod.Create(nil, crash)
@@ -86,7 +101,7 @@ func (s *CrashesModuleTestSuite) TestCreateInvalidLink() {
 }
 
 func (s *CrashesModuleTestSuite) TestCreateNoRegex() {
-	crash := defaultCrash
+	crash := otherCrash
 	crash.Regexes = []string{}
 
 	err := s.mod.Create(nil, crash)
@@ -94,7 +109,7 @@ func (s *CrashesModuleTestSuite) TestCreateNoRegex() {
 }
 
 func (s *CrashesModuleTestSuite) TestCreateEmptyResponse() {
-	crash := defaultCrash
+	crash := otherCrash
 	crash.Response = domain.Response{}
 
 	err := s.mod.Create(nil, crash)
@@ -102,7 +117,7 @@ func (s *CrashesModuleTestSuite) TestCreateEmptyResponse() {
 }
 
 func (s *CrashesModuleTestSuite) TestCreateResponseEmptyText() {
-	crash := defaultCrash
+	crash := otherCrash
 	empty := ""
 	crash.Response = domain.Response{Text: &empty}
 
