@@ -124,3 +124,12 @@ func (s *CrashesModuleTestSuite) TestCreateResponseEmptyText() {
 	err := s.mod.Create(nil, crash)
 	s.Require().Error(err)
 }
+
+func (s *CrashesModuleTestSuite) TestAnalyseNewRegex() {
+	err := s.mod.Create(nil, otherCrash)
+	s.Require().NoError(err)
+
+	matches, err := s.mod.Analyse(nil, otherCrash.Regexes[0])
+	s.Require().NoError(err)
+	s.Require().Len(matches, 1)
+}

@@ -9,6 +9,7 @@ import (
 	"FICSIT-Ordis/internal/ports/repos/repo"
 	"context"
 	"github.com/pkg/errors"
+	"net/url"
 	"regexp"
 )
 
@@ -35,6 +36,15 @@ type Module struct {
 	cache []domain.Crash
 }
 
+func (mod *Module) Create(ctx context.Context, crash domain.Crash) error {
+	err := mod.validateCrash(crash)
+	if err != nil {
+		return err
+	}
+
+	return mod.Searchable.Create(ctx, crash)
+}
+
 func (m *Module) Analyse(ctx context.Context, s string) ([]domain.CrashMatch, error) {
 	crashes, err := m.getCache(ctx)
 	if err != nil {
@@ -55,6 +65,32 @@ func (m *Module) Analyse(ctx context.Context, s string) ([]domain.CrashMatch, er
 	}
 
 	return matches, nil
+}
+
+func (m *Module) validateCrash(crash domain.Crash) error {
+	if len(crash.Regexes) == 0 {
+		return errors.New("a crash must have a regex")
+	}
+
+	if (crash.Response.Text == nil || *crash.Response.Text == "") && len(crash.Response.MediaLinks) == 0 {
+		return errors.New("a crash's response must have at least a text or a media link")
+	}
+
+	for i, regex := range crash.Regexes {
+		_, err := regexp.Compile(regex)
+		if err != nil {
+			return errors.Wrapf(err, "invalid regex %v '%v'", i, regex)
+		}
+	}
+
+	for i, link := range crash.Response.MediaLinks {
+		_, err := url.ParseRequestURI(link)
+		if err != nil {
+			return errors.Wrapf(err, "invalid media link %v '%v'", i, link)
+		}
+	}
+
+	return nil
 }
 
 func (m *Module) getCache(ctx context.Context) ([]domain.Crash, error) {
