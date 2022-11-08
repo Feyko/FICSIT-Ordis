@@ -42,18 +42,27 @@ func (mod *Module) Create(ctx context.Context, crash domain.Crash) error {
 		return err
 	}
 
-	return mod.Searchable.Create(ctx, crash)
+	err = mod.Searchable.Create(ctx, crash)
+	if err != nil {
+		return err
+	}
+	err = mod.updateCache(ctx)
+	return errors.Wrap(err, "error updating cache")
+}
+
+func (mod *Module) Update(ctx context.Context, name string, crashUpdate any) (domain.Crash, error) {
+	newCrash, err := mod.Searchable.Update(ctx, name, crashUpdate)
+	if err != nil {
+		return newCrash, err
+	}
+	err = mod.updateCache(ctx)
+	return newCrash, errors.Wrap(err, "error updating cache")
 }
 
 func (m *Module) Analyse(ctx context.Context, s string) ([]domain.CrashMatch, error) {
-	crashes, err := m.getCache(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "error getting cache")
-	}
-
 	var matches []domain.CrashMatch
 
-	for _, crash := range crashes {
+	for _, crash := range m.cache {
 		for _, regex := range crash.Regexes {
 			newMatches, err := m.executeRegex(&crash, regex, &s)
 			if err != nil {
@@ -65,6 +74,15 @@ func (m *Module) Analyse(ctx context.Context, s string) ([]domain.CrashMatch, er
 	}
 
 	return matches, nil
+}
+
+func (m *Module) updateCache(ctx context.Context) error {
+	crashes, err := m.List(ctx)
+	if err != nil {
+		return errors.Wrap(err, "error getting crash list")
+	}
+	m.cache = crashes
+	return nil
 }
 
 func (m *Module) validateCrash(crash domain.Crash) error {
@@ -91,10 +109,6 @@ func (m *Module) validateCrash(crash domain.Crash) error {
 	}
 
 	return nil
-}
-
-func (m *Module) getCache(ctx context.Context) ([]domain.Crash, error) {
-	return m.List(ctx)
 }
 
 func (m *Module) executeRegex(crash *domain.Crash, regex string, s *string) ([]domain.CrashMatch, error) {
