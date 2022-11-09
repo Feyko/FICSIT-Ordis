@@ -1,0 +1,13 @@
+type LatestInformation {
+    revision: Int!
+    text: String!
+}
+
+extend type Query {
+    getLatestInformation: LatestInformation
+}
+
+extend type Mutation {
+    setLatestInformation(text: String!): Boolean!
+    removeLatestInformation: Boolean!
+}

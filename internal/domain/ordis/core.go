@@ -4,25 +4,25 @@ import (
 	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/domain/modules/commands"
 	"FICSIT-Ordis/internal/domain/modules/crashes"
-	"FICSIT-Ordis/internal/domain/modules/information"
+	"FICSIT-Ordis/internal/domain/modules/latestInformation"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/arango"
 	"github.com/pkg/errors"
 )
 
 type Ordis struct {
-	Commands    *commands.Module
-	Crashes     *crashes.Module
-	Auth        *auth.Module
-	Information *information.Module
+	Commands          *commands.Module
+	Crashes           *crashes.Module
+	Auth              *auth.Module
+	LatestInformation *latestInformation.Module
 }
 
 type Config struct {
-	Arango      arango.Config
-	Auth        auth.Config
-	Commands    commands.Config
-	Crashes     crashes.Config
-	Information information.Config
+	Arango            arango.Config
+	Auth              auth.Config
+	Commands          commands.Config
+	Crashes           crashes.Config
+	LatestInformation latestInformation.Config
 }
 
 func New(conf Config) (Ordis, error) {
@@ -50,18 +50,18 @@ func New(conf Config) (Ordis, error) {
 		return Ordis{}, errors.Wrap(err, "could not create the commands module")
 	}
 
-	fillAuthConfig(authModule, &conf.Information.AuthedConfig)
+	fillAuthConfig(authModule, &conf.LatestInformation.AuthedConfig)
 
-	infoModule, err := information.New(conf.Information, repo)
+	infoModule, err := latestInformation.New(conf.LatestInformation, repo)
 	if err != nil {
-		return Ordis{}, errors.Wrap(err, "could not create the information module")
+		return Ordis{}, errors.Wrap(err, "could not create the latestInformation module")
 	}
 
 	return Ordis{
-		Commands:    commandsModule,
-		Crashes:     crashesModule,
-		Auth:        authModule,
-		Information: infoModule,
+		Commands:          commandsModule,
+		Crashes:           crashesModule,
+		Auth:              authModule,
+		LatestInformation: infoModule,
 	}, nil
 }
 
