@@ -32,7 +32,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createCrash(Crash: CrashCreation!): Crash!
-    updateCrash(Crash: CrashUpdate!): Crash
+    createCrash(Crash: CrashCreation!): Boolean!
+    updateCrash(name: String!, Crash: CrashUpdate!): Crash
     deleteCrash(name: String!): Boolean!
 }

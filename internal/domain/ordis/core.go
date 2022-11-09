@@ -3,6 +3,7 @@ package ordis
 import (
 	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/domain/modules/commands"
+	"FICSIT-Ordis/internal/domain/modules/crashes"
 	"FICSIT-Ordis/internal/domain/modules/information"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos/arango"
@@ -11,6 +12,7 @@ import (
 
 type Ordis struct {
 	Commands    *commands.Module
+	Crashes     *crashes.Module
 	Auth        *auth.Module
 	Information *information.Module
 }
@@ -19,6 +21,7 @@ type Config struct {
 	Arango      arango.Config
 	Auth        auth.Config
 	Commands    commands.Config
+	Crashes     crashes.Config
 	Information information.Config
 }
 
@@ -40,6 +43,13 @@ func New(conf Config) (Ordis, error) {
 		return Ordis{}, errors.Wrap(err, "could not create the commands module")
 	}
 
+	fillAuthConfig(authModule, &conf.Crashes.AuthedConfig)
+
+	crashesModule, err := crashes.New(conf.Crashes, repo)
+	if err != nil {
+		return Ordis{}, errors.Wrap(err, "could not create the commands module")
+	}
+
 	fillAuthConfig(authModule, &conf.Information.AuthedConfig)
 
 	infoModule, err := information.New(conf.Information, repo)
@@ -49,6 +59,7 @@ func New(conf Config) (Ordis, error) {
 
 	return Ordis{
 		Commands:    commandsModule,
+		Crashes:     crashesModule,
 		Auth:        authModule,
 		Information: infoModule,
 	}, nil

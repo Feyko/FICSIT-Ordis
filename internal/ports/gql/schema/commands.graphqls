@@ -23,7 +23,7 @@ extend type Query {
 }
 
 extend type Mutation {
-    createCommand(command: CommandCreation!): Command!
+    createCommand(command: CommandCreation!): Boolean!
     updateCommand(name: String!, command: CommandUpdate!): Command
     deleteCommand(name: String!): Boolean!
 }

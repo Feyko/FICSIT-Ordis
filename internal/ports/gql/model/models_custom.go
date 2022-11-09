@@ -7,3 +7,5 @@ import (
 //type ResponseInput domain.Response
 
 type CommandCreation domain.Command
+
+type CrashCreation domain.Crash

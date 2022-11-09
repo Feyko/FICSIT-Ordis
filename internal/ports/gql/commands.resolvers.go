@@ -13,10 +13,9 @@ import (
 )
 
 // CreateCommand is the resolver for the createCommand field.
-func (r *mutationResolver) CreateCommand(ctx context.Context, command model.CommandCreation) (*domain.Command, error) {
-	cmd := domain.Command(command)
-	err := r.O.Commands.Create(ctx, cmd)
-	return &cmd, err
+func (r *mutationResolver) CreateCommand(ctx context.Context, command model.CommandCreation) (bool, error) {
+	err := r.O.Commands.Create(ctx, domain.Command(command))
+	return err == nil, err
 }
 
 // UpdateCommand is the resolver for the updateCommand field.

@@ -75,12 +75,12 @@ func (mod *Module) Update(ctx context.Context, name string, crashUpdate any) (do
 	return newCrash, errors.Wrap(err, "error updating cache")
 }
 
-func (m *Module) Analyse(ctx context.Context, s string) ([]domain.CrashMatch, error) {
+func (m *Module) Analyse(ctx context.Context, text string) ([]domain.CrashMatch, error) {
 	var matches []domain.CrashMatch
 
 	for _, crash := range m.cache {
 		for _, regex := range crash.Regexes {
-			newMatches, err := m.executeRegex(&crash, regex, &s)
+			newMatches, err := m.executeRegex(&crash, regex, &text)
 			if err != nil {
 				return nil, err
 			}
