@@ -15,7 +15,7 @@ input CrashCreation {
 input CrashUpdate {
     name: String
     description: String
-    regexes: [String]
+    regexes: [String!]
     response: ResponseInput
 }
 

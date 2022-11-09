@@ -21,6 +21,6 @@ type Collection[E id.IDer] interface {
 	Search(ctx context.Context, search string, fields []string) ([]E, error)
 
 	Create(ctx context.Context, element E) error
-	Update(ctx context.Context, ID string, updateElement any) (E, error)
+	Update(ctx context.Context, ID string, updateElement any) (old E, new E, err error)
 	Delete(ctx context.Context, ID string) error
 }

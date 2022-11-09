@@ -3,7 +3,7 @@ package domain
 type CrashUpdate struct {
 	Name        *string   `json:"name"`
 	Description *string   `json:"description"`
-	Regexes     []*string `json:"regexes"`
+	Regexes     []string  `json:"regexes"`
 	Response    *Response `json:"response"`
 }
 

@@ -51,10 +51,26 @@ func (mod *Module) Create(ctx context.Context, crash domain.Crash) error {
 }
 
 func (mod *Module) Update(ctx context.Context, name string, crashUpdate any) (domain.Crash, error) {
-	newCrash, err := mod.Searchable.Update(ctx, name, crashUpdate)
+	oldCrash, newCrash, err := mod.Searchable.Update(ctx, name, crashUpdate)
 	if err != nil {
-		return newCrash, err
+		return domain.Crash{}, err
 	}
+
+	err = mod.validateCrash(newCrash)
+	if err != nil {
+		_, _, newErr := mod.Searchable.Update(ctx, name, domain.CrashUpdate{
+			Name:        &oldCrash.Name,
+			Description: oldCrash.Description,
+			Regexes:     oldCrash.Regexes,
+			Response:    &oldCrash.Response,
+		})
+		if newErr != nil {
+			return domain.Crash{}, errors.Wrap(err, "error while reversing update of invalid crash")
+		}
+
+		return domain.Crash{}, err
+	}
+
 	err = mod.updateCache(ctx)
 	return newCrash, errors.Wrap(err, "error updating cache")
 }

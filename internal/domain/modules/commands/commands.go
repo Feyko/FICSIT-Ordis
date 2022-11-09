@@ -71,7 +71,7 @@ func (m *Module) Update(ctx context.Context, name string, updateElement any) (*d
 	if err != nil {
 		return nil, err
 	}
-	updated, err := m.Module.Update(ctx, cmd.ID(), updateElement)
+	_, updated, err := m.Module.Update(ctx, cmd.ID(), updateElement)
 	return &updated, err
 }
 

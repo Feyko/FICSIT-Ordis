@@ -197,7 +197,7 @@ func (s *ExampleModuleTestSuite) TestUpdate() {
 
 	createDefaultCommandChecked(t, s.mod)
 
-	r, err := s.mod.Update(nil, defaultElement.Name, updateElement)
+	_, r, err := s.mod.Update(nil, defaultElement.Name, updateElement)
 
 	require.NoError(t, err, "Error when trying to update an element")
 	assert.Equal(t, expected, r, "Returned element is not updated")

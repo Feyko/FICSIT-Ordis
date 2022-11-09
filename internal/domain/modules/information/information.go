@@ -45,6 +45,6 @@ func (m *Module) Set(ctx context.Context, info string) error {
 	if err != nil {
 		return m.base.Create(ctx, id.Wrapper[string]{ID_: "latest-information", Wrapped: info})
 	}
-	_, err = m.base.Update(ctx, "latest-information", id.WrapperUpdate[string]{Wrapped: &info})
+	_, _, err = m.base.Update(ctx, "latest-information", id.WrapperUpdate[string]{Wrapped: &info})
 	return err
 }

@@ -197,18 +197,26 @@ func (c *Collection[T]) Create(ctx context.Context, element T) error {
 	return nil
 }
 
-func (c *Collection[T]) Update(ctx context.Context, ID string, updateElement any) (T, error) {
+func (c *Collection[T]) Update(ctx context.Context, ID string, updateElement any) (T, T, error) {
 	asMap, err := id.AnyToMapNoID(updateElement)
 	if err != nil {
-		return *new(T), errors.Wrap(err, "could not turn the element into a map")
+		return *new(T), *new(T), errors.Wrap(err, "could not turn the element into a map")
 	}
 	asMap["id"] = ID
 	query := buildUpdateQuery(updateElement, "coll", "doc")
-	elems, err := runQueryInCollection(ctx, c, query, asMap)
+
+	cursor, err := runQueryInCollectionCursor(ctx, c, query, asMap)
 	if err != nil {
-		return *new(T), errors.Wrap(err, "could not update the document")
+		return *new(T), *new(T), errors.Wrap(err, "could not update the document")
 	}
-	return elems[0], nil
+
+	var elems []T
+	_, err = cursor.ReadDocument(ctx, &elems)
+	if err != nil {
+		return *new(T), *new(T), errors.Wrap(err, "could not read the old/new documents")
+	}
+
+	return elems[0], elems[1], nil
 }
 
 func (c *Collection[T]) Delete(ctx context.Context, ID string) error {
@@ -318,6 +326,6 @@ func buildUpdateQuery[T any](element T, collParam, elemParam string) string {
 		query += fmt.Sprintf("%v: @%v, ", name, name)
 	}
 	query = strings.TrimSuffix(query, ", ")
-	query += fmt.Sprintf(" } in @@%v\nreturn NEW", collParam)
+	query += fmt.Sprintf(" } in @@%v\nreturn [OLD, NEW]", collParam)
 	return query
 }

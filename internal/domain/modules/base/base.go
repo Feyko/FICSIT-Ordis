@@ -97,16 +97,16 @@ func (mod *Module[E]) Delete(ctx context.Context, ID string) error {
 	return nil
 }
 
-func (mod *Module[E]) Update(ctx context.Context, ID string, updateElement any) (E, error) {
-	err := mod.checkForPermission(&ctx, mod.config.UpdatePermission)
+func (mod *Module[E]) Update(ctx context.Context, ID string, updateElement any) (oldElem E, newElem E, err error) {
+	err = mod.checkForPermission(&ctx, mod.config.UpdatePermission)
 	if err != nil {
-		return *new(E), err
+		return *new(E), *new(E), err
 	}
-	elem, err := mod.Collection.Update(ctx, ID, updateElement)
+	oldElem, newElem, err = mod.Collection.Update(ctx, ID, updateElement)
 	if err != nil {
-		return *new(E), errors.Wrap(err, "could not update the element")
+		return *new(E), *new(E), errors.Wrap(err, "could not update the element")
 	}
-	return elem, nil
+	return oldElem, newElem, nil
 }
 
 func (mod *Module[E]) checkForPermission(ctx *context.Context, perm *domain.Permission) error {

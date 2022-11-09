@@ -133,3 +133,53 @@ func (s *CrashesModuleTestSuite) TestAnalyseNewRegex() {
 	s.Require().NoError(err)
 	s.Require().Len(matches, 1)
 }
+
+func (s *CrashesModuleTestSuite) TestUpdateInvalidRegex() {
+	var crash domain.CrashUpdate
+	crash.Regexes = []string{"[ invalid"}
+
+	_, err := s.mod.Update(nil, defaultCrash.Name, crash)
+	s.Require().Error(err)
+}
+
+func (s *CrashesModuleTestSuite) TestUpdateInvalidLink() {
+	var crash domain.CrashUpdate
+	crash.Response = &domain.Response{MediaLinks: []string{"notalink"}}
+
+	_, err := s.mod.Update(nil, defaultCrash.Name, crash)
+	s.Require().Error(err)
+}
+
+func (s *CrashesModuleTestSuite) TestUpdateNoRegex() {
+	var crash domain.CrashUpdate
+	crash.Regexes = []string{}
+
+	_, err := s.mod.Update(nil, defaultCrash.Name, crash)
+	s.Require().Error(err)
+}
+
+func (s *CrashesModuleTestSuite) TestUpdateEmptyResponse() {
+	var crash domain.CrashUpdate
+	crash.Response = &domain.Response{}
+
+	_, err := s.mod.Update(nil, defaultCrash.Name, crash)
+	s.Require().Error(err)
+}
+
+func (s *CrashesModuleTestSuite) TestUpdateResponseEmptyText() {
+	var crash domain.CrashUpdate
+	empty := ""
+	crash.Response = &domain.Response{Text: &empty}
+
+	_, err := s.mod.Update(nil, defaultCrash.Name, crash)
+	s.Require().Error(err)
+}
+
+func (s *CrashesModuleTestSuite) TestAnalyseUpdatedRegex() {
+	_, err := s.mod.Update(nil, defaultCrash.Name, domain.CrashUpdate{Regexes: otherCrash.Regexes})
+	s.Require().NoError(err)
+
+	matches, err := s.mod.Analyse(nil, otherCrash.Regexes[0])
+	s.Require().NoError(err)
+	s.Require().Len(matches, 1)
+}

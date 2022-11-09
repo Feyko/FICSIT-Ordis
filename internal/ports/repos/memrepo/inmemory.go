@@ -121,16 +121,17 @@ func (repo *Collection[T]) Create(ctx context.Context, element T) error {
 	return nil
 }
 
-func (repo *Collection[T]) Update(ctx context.Context, ID string, updateElement any) (T, error) {
-	_, i, err := repo.findWithIndex(ID)
+func (repo *Collection[T]) Update(ctx context.Context, ID string, updateElement any) (oldElem T, newElem T, err error) {
+	found, i, err := repo.findWithIndex(ID)
 	if err != nil {
-		return *new(T), errors.Wrap(err, "could not get the element")
+		return *new(T), *new(T), errors.Wrap(err, "could not get the element")
 	}
+	oldElem = found
 	err = util.PatchStruct(&repo.elements[i], updateElement)
 	if err != nil {
-		return *new(T), errors.Wrap(err, "could not update the element")
+		return *new(T), *new(T), errors.Wrap(err, "could not update the element")
 	}
-	return repo.elements[i], nil
+	return oldElem, repo.elements[i], nil
 }
 
 func (repo *Collection[T]) Delete(ctx context.Context, ID string) error {
