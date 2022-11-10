@@ -4,17 +4,17 @@ package gql
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
-	"FICSIT-Ordis/internal/ports/gql/model"
+	"FICSIT-Ordis/internal/domain/domain"
 	"context"
 	"fmt"
 )
 
-// AnalyseFile is the resolver for the analyseFile field.
-func (r *queryResolver) AnalyseFile(ctx context.Context, fileURL string) (*model.AnalysisResult, error) {
-	panic(fmt.Errorf("not implemented"))
+// AnalyseFileURL is the resolver for the analyseFileURL field.
+func (r *queryResolver) AnalyseFileURL(ctx context.Context, fileURL string) (*domain.AnalysisResult, error) {
+	panic(fmt.Errorf("not implemented: AnalyseFileURL - analyseFileURL"))
 }
 
 // AnalyseText is the resolver for the analyseText field.
-func (r *queryResolver) AnalyseText(ctx context.Context, text string) (*model.AnalysisResult, error) {
+func (r *queryResolver) AnalyseText(ctx context.Context, text string) (*domain.AnalysisResult, error) {
 	panic(fmt.Errorf("not implemented"))
 }

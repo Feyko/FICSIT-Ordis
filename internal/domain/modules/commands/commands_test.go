@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func TestExampleModuleTestSuite(t *testing.T) {
+func TestCommandsModuleTestSuite(t *testing.T) {
 	suite.Run(t, new(CommandsModuleTestSuite))
 }
 

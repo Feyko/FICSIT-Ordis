@@ -1,20 +1,22 @@
-type PiracyInformation {
-    isPirated: Boolean!
-    commandLine: String
-    path: String
-    cl: String
-}
-
 type AnalysisResult {
     smlVersion: String
     gameVersion: String
+    commandLine: String
+    path: String
+    cl: String
     modList: [String!]
+
     piracyInfo: PiracyInformation
-    isSMLVersionCorrect: Boolean
+    desiredSMLVersion: String
     crashMatches: [CrashMatch!]
 }
 
+type PiracyInformation {
+    isPirated: Boolean!
+    reason: String!
+}
+
 extend type Query {
-    analyseFile(fileURL: String!): AnalysisResult!
+    analyseFileURL(fileURL: String!): AnalysisResult!
     analyseText(text: String!): AnalysisResult!
 }
