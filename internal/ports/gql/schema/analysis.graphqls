@@ -3,8 +3,9 @@ type AnalysisResult {
     gameVersion: String
     commandLine: String
     path: String
-    cl: String
     modList: [String!]
+    launcherID: String
+    launcherArtifact: String
 
     piracyInfo: PiracyInformation
     desiredSMLVersion: String

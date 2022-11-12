@@ -47,7 +47,7 @@ func New(conf Config) (Ordis, error) {
 
 	crashesModule, err := crashes.New(conf.Crashes, repo)
 	if err != nil {
-		return Ordis{}, errors.Wrap(err, "could not create the commands module")
+		return Ordis{}, errors.Wrap(err, "could not create the crashes module")
 	}
 
 	fillAuthConfig(authModule, &conf.LatestInformation.AuthedConfig)

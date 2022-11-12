@@ -2,22 +2,26 @@ package analysis
 
 import (
 	"FICSIT-Ordis/internal/domain/domain"
+	"FICSIT-Ordis/internal/domain/modules/crashes"
 	"archive/zip"
 	"bytes"
 	"context"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
+	"regexp"
 )
 
 type Config struct {
+	CrashesModule *crashes.Module
 }
 
 func New(conf Config) (*Module, error) {
-	return &Module{}, nil
+	return &Module{CrashesModule: conf.CrashesModule}, nil
 }
 
 type Module struct {
+	CrashesModule *crashes.Module
 }
 
 func (m *Module) AnalyseFileURL(ctx context.Context, url string) (*domain.AnalysisResult, error) {
@@ -47,14 +51,15 @@ func (m *Module) AnalyseFile(ctx context.Context, file io.Reader) (*domain.Analy
 
 	zipReader, err := zip.NewReader(reader, reader.Size())
 	if err != nil {
-		return m.AnalyseText(ctx, string(b))
+		return m.AnalyseText(ctx, b)
 	}
 
 	return m.analyseZipFile(ctx, zipReader)
 }
 
-func (m *Module) AnalyseText(ctx context.Context, url string) (*domain.AnalysisResult, error) {
-	return nil, nil
+func (m *Module) AnalyseText(ctx context.Context, text []byte) (*domain.AnalysisResult, error) {
+	extractor := newLogExtractor(text, m)
+	return extractor.Result(ctx)
 }
 
 func (m *Module) analyseZipFile(ctx context.Context, zipFile *zip.Reader) (*domain.AnalysisResult, error) {
@@ -79,9 +84,6 @@ func (m *Module) analyseZipFile(ctx context.Context, zipFile *zip.Reader) (*doma
 // mergeResults merges res2 into res1
 // Crash matches are merged together instead of one list taking precedence. Duplicate matches are removed
 func mergeResults(res1, res2 *domain.AnalysisResult) error {
-	if res1.Cl == nil {
-		res1.Cl = res2.Cl
-	}
 	if res1.CommandLine == nil {
 		res1.CommandLine = res2.CommandLine
 	}
@@ -120,4 +122,62 @@ func mergeCrashMatches(m1, m2 []domain.CrashMatch) []domain.CrashMatch {
 		r = append(r, match)
 	}
 	return r
+}
+
+func newLogExtractor(text []byte, module *Module) logExtractor {
+	return logExtractor{
+		module: module,
+		text:   text,
+	}
+}
+
+type logExtractor struct {
+	module *Module
+	text   []byte
+}
+
+func (l *logExtractor) Result(ctx context.Context) (*domain.AnalysisResult, error) {
+	var result domain.AnalysisResult
+
+	matches, err := l.module.CrashesModule.Analyse(ctx, string(l.text))
+	if err != nil {
+		return nil, errors.Wrap(err, "error analysing crashes")
+	}
+	result.CrashMatches = matches
+
+	modList, err := l.ModList()
+	if err != nil {
+		return nil, errors.Wrap(err, "error finding mod list")
+	}
+	result.ModList = modList
+
+	l.setStringForMatch(&result.SMLVersion, `Satisfactory Mod Loader v\.?(\d(\.\d)*)`, 1)
+	l.setStringForMatch(&result.GameVersion, `Net CL: (\d+)`, 1)
+	l.setStringForMatch(&result.Path, `(?m)LogInit: Base Directory: (.*)$`, 1)
+	l.setStringForMatch(&result.CommandLine, `(?m)LogInit: Command Line: (.*$)`, 1)
+	l.setStringForMatch(&result.LauncherID, `(?m)LogInit: Launcher ID: (.*$)`, 1)
+	l.setStringForMatch(&result.LauncherArtifact, `(?m)LogInit: Launcher Artifact: (.*$)`, 1)
+
+	return &result, nil
+}
+
+func (l *logExtractor) ModList() ([]string, error) {
+	regex := regexp.MustCompile(`LogPakFile: New pak file ../../../FactoryGame/Mods/(.*?)/`)
+
+	matches := regex.FindAllSubmatch(l.text, -1)
+	r := make([]string, len(matches))
+	for i, match := range matches {
+		r[i] = string(match[1])
+	}
+
+	return r, nil
+}
+
+func (l *logExtractor) setStringForMatch(p **string, regex string, group int) {
+	reg := regexp.MustCompile(regex)
+	found := reg.FindSubmatch(l.text)
+	if len(found) > 0 && len(found[0]) != 0 {
+		s := string(found[group])
+		*p = &s
+	}
 }
