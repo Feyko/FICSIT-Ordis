@@ -119,3 +119,10 @@ func (s *AnalysisModuleTestSuite) TestLauncherArtifact() {
 	s.Require().NotNil(result.LauncherArtifact)
 	s.Equal("CrabTest", *result.LauncherArtifact)
 }
+
+func (s *AnalysisModuleTestSuite) TestDesiredSMLVersion() {
+	result, err := s.mod.AnalyseText(nil, []byte("LogInit: Net CL: 201345"))
+	s.Require().NoError(err)
+	s.Require().NotNil(result.DesiredSMLVersion)
+	s.Require().Equal("3.3.2", *result.DesiredSMLVersion)
+}

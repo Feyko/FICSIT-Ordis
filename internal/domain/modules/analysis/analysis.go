@@ -3,13 +3,16 @@ package analysis
 import (
 	"FICSIT-Ordis/internal/domain/domain"
 	"FICSIT-Ordis/internal/domain/modules/crashes"
+	"FICSIT-Ordis/internal/smr"
 	"archive/zip"
 	"bytes"
 	"context"
+	"git.sr.ht/~emersion/gqlclient"
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"regexp"
+	"strconv"
 )
 
 type Config struct {
@@ -17,11 +20,15 @@ type Config struct {
 }
 
 func New(conf Config) (*Module, error) {
-	return &Module{CrashesModule: conf.CrashesModule}, nil
+	return &Module{
+		CrashesModule: conf.CrashesModule,
+		SMR:           gqlclient.New("https://api.ficsit.app/v2/query", http.DefaultClient),
+	}, nil
 }
 
 type Module struct {
 	CrashesModule *crashes.Module
+	SMR           *gqlclient.Client
 }
 
 func (m *Module) AnalyseFileURL(ctx context.Context, url string) (*domain.AnalysisResult, error) {
@@ -158,6 +165,8 @@ func (l *logExtractor) Result(ctx context.Context) (*domain.AnalysisResult, erro
 	l.setStringForMatch(&result.LauncherID, `(?m)LogInit: Launcher ID: (.*$)`, 1)
 	l.setStringForMatch(&result.LauncherArtifact, `(?m)LogInit: Launcher Artifact: (.*$)`, 1)
 
+	result.DesiredSMLVersion = l.desiredSMLVersion(result.GameVersion)
+
 	return &result, nil
 }
 
@@ -180,4 +189,29 @@ func (l *logExtractor) setStringForMatch(p **string, regex string, group int) {
 		s := string(found[group])
 		*p = &s
 	}
+}
+
+func (l *logExtractor) desiredSMLVersion(gameVersion *string) *string {
+	if gameVersion == nil {
+		return nil
+	}
+
+	gameCL, err := strconv.ParseInt(*gameVersion, 10, 32)
+	if err != nil {
+		return nil
+	}
+
+	r, err := smr.QGetSMLVersions(l.module.SMR, context.Background())
+	if err != nil {
+		return nil
+	}
+	gameCL = gameCL
+	for _, version := range r.Sml_versions {
+		if version.Satisfactory_version > int32(gameCL) {
+			continue
+		}
+		return &version.Version
+	}
+
+	return nil
 }

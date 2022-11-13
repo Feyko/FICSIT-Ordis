@@ -3,6 +3,7 @@ module FICSIT-Ordis
 go 1.18
 
 require (
+	git.sr.ht/~emersion/gqlclient v0.0.0-20221107153406-1d1d46a724f4
 	github.com/99designs/gqlgen v0.17.20
 	github.com/arangodb/go-driver v1.4.0
 	github.com/fatih/structs v1.1.0
@@ -18,6 +19,7 @@ require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
+	github.com/dave/jennifer v1.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect

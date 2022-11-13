@@ -1,0 +1,7 @@
+query QGetSMLVersions {
+    getSMLVersions(filter: {limit: 100}) {
+        sml_versions {
+            version
+            satisfactory_version
+    }}
+}
