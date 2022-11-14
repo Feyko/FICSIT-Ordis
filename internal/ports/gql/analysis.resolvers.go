@@ -6,15 +6,14 @@ package gql
 import (
 	"FICSIT-Ordis/internal/domain/domain"
 	"context"
-	"fmt"
 )
 
 // AnalyseFileURL is the resolver for the analyseFileURL field.
 func (r *queryResolver) AnalyseFileURL(ctx context.Context, fileURL string) (*domain.AnalysisResult, error) {
-	panic(fmt.Errorf("not implemented: AnalyseFileURL - analyseFileURL"))
+	return r.O.Analysis.AnalyseFileURL(ctx, fileURL)
 }
 
 // AnalyseText is the resolver for the analyseText field.
 func (r *queryResolver) AnalyseText(ctx context.Context, text string) (*domain.AnalysisResult, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.O.Analysis.AnalyseText(ctx, []byte(text))
 }

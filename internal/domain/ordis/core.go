@@ -1,6 +1,7 @@
 package ordis
 
 import (
+	"FICSIT-Ordis/internal/domain/modules/analysis"
 	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/domain/modules/commands"
 	"FICSIT-Ordis/internal/domain/modules/crashes"
@@ -11,13 +12,15 @@ import (
 )
 
 type Ordis struct {
+	Auth              *auth.Module
+	Analysis          *analysis.Module
 	Commands          *commands.Module
 	Crashes           *crashes.Module
-	Auth              *auth.Module
 	LatestInformation *latestInformation.Module
 }
 
 type Config struct {
+	Analysis          analysis.Config
 	Arango            arango.Config
 	Auth              auth.Config
 	Commands          commands.Config
@@ -57,10 +60,18 @@ func New(conf Config) (Ordis, error) {
 		return Ordis{}, errors.Wrap(err, "could not create the latestInformation module")
 	}
 
+	conf.Analysis.CrashesModule = crashesModule
+
+	analysisModule, err := analysis.New(conf.Analysis)
+	if err != nil {
+		return Ordis{}, errors.Wrap(err, "could not create the latestInformation module")
+	}
+
 	return Ordis{
+		Auth:              authModule,
+		Analysis:          analysisModule,
 		Commands:          commandsModule,
 		Crashes:           crashesModule,
-		Auth:              authModule,
 		LatestInformation: infoModule,
 	}, nil
 }

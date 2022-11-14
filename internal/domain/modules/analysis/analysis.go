@@ -21,14 +21,14 @@ type Config struct {
 
 func New(conf Config) (*Module, error) {
 	return &Module{
-		CrashesModule: conf.CrashesModule,
-		SMR:           gqlclient.New("https://api.ficsit.app/v2/query", http.DefaultClient),
+		crashesModule: conf.CrashesModule,
+		smr:           gqlclient.New("https://api.ficsit.app/v2/query", http.DefaultClient),
 	}, nil
 }
 
 type Module struct {
-	CrashesModule *crashes.Module
-	SMR           *gqlclient.Client
+	crashesModule *crashes.Module
+	smr           *gqlclient.Client
 }
 
 func (m *Module) AnalyseFileURL(ctx context.Context, url string) (*domain.AnalysisResult, error) {
@@ -146,7 +146,7 @@ type logExtractor struct {
 func (l *logExtractor) Result(ctx context.Context) (*domain.AnalysisResult, error) {
 	var result domain.AnalysisResult
 
-	matches, err := l.module.CrashesModule.Analyse(ctx, string(l.text))
+	matches, err := l.module.crashesModule.Analyse(ctx, string(l.text))
 	if err != nil {
 		return nil, errors.Wrap(err, "error analysing crashes")
 	}
@@ -201,7 +201,7 @@ func (l *logExtractor) desiredSMLVersion(gameVersion *string) *string {
 		return nil
 	}
 
-	r, err := smr.QGetSMLVersions(l.module.SMR, context.Background())
+	r, err := smr.QGetSMLVersions(l.module.smr, context.Background())
 	if err != nil {
 		return nil
 	}
