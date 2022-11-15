@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -161,9 +162,9 @@ func (l *logExtractor) Result(ctx context.Context) (*domain.AnalysisResult, erro
 	l.setStringForMatch(&result.SMLVersion, `Satisfactory Mod Loader v\.?(\d(\.\d)*)`, 1)
 	l.setStringForMatch(&result.GameVersion, `Net CL: (\d+)`, 1)
 	l.setStringForMatch(&result.Path, `(?m)LogInit: Base Directory: (.*)$`, 1)
-	l.setStringForMatch(&result.CommandLine, `(?m)LogInit: Command Line: (.*$)`, 1)
-	l.setStringForMatch(&result.LauncherID, `(?m)LogInit: Launcher ID: (.*$)`, 1)
-	l.setStringForMatch(&result.LauncherArtifact, `(?m)LogInit: Launcher Artifact: (.*$)`, 1)
+	l.setStringForMatch(&result.CommandLine, `(?m)LogInit: Command Line: (.*)$`, 1)
+	l.setStringForMatch(&result.LauncherID, `(?m)LogInit: Launcher ID: (.*)$`, 1)
+	l.setStringForMatch(&result.LauncherArtifact, `(?m)LogInit: Launcher Artifact: (.*)$`, 1)
 
 	result.DesiredSMLVersion = l.desiredSMLVersion(result.GameVersion)
 
@@ -186,7 +187,7 @@ func (l *logExtractor) setStringForMatch(p **string, regex string, group int) {
 	reg := regexp.MustCompile(regex)
 	found := reg.FindSubmatch(l.text)
 	if len(found) > 0 && len(found[0]) != 0 {
-		s := string(found[group])
+		s := strings.TrimSpace(string(found[group]))
 		*p = &s
 	}
 }
