@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -76,6 +76,8 @@ func (m *Module) AnalyseText(ctx context.Context, text []byte) (*domain.Analysis
 	if result.SMLVersion != nil {
 		result.DesiredSMLVersion = m.desiredSMLVersion(result.GameVersion)
 	}
+
+	m.setPiracyInfo(result)
 
 	return result, nil
 }
@@ -234,7 +236,8 @@ func (m *Module) setPiracyInfo(result *domain.AnalysisResult) {
 	var isValidEpicPath bool
 
 	if result.Path != nil {
-		newPath, _ := path.Split(*result.Path) // We remove the last part of the path as it is OS-specific
+		path := *result.Path
+		newPath := strings.TrimSuffix(filepath.Dir(path), filepath.Base(path)) // We remove the last part of the path as it is OS-specific
 		isValidSteamPath = strings.HasSuffix(newPath, "steamapps/common/Satisfactory/Engine/Binaries/")
 		isValidEpicPath = strings.HasSuffix(newPath, "SatisfactoryExperimental/Engine/Binaries/") || strings.HasSuffix(newPath, "SatisfactoryEarlyAccess/Engine/Binaries/")
 	}
@@ -252,7 +255,7 @@ func (m *Module) setPiracyInfo(result *domain.AnalysisResult) {
 			reason = "the launcher id is invalid"
 		}
 
-		if launcherID == "epic" && !(launcherArtifact == "CrabEXP" || launcherArtifact == "CrabEA") {
+		if launcherID == "epic" && !(launcherArtifact == "CrabTest" || launcherArtifact == "CrabEA") {
 			reason = "the launcher artifact is invalid"
 		}
 	}
@@ -265,5 +268,5 @@ func (m *Module) setPiracyInfo(result *domain.AnalysisResult) {
 }
 
 func hasEnoughInfoForPiracyCheck(result *domain.AnalysisResult) bool {
-	return result.Path == nil && (result.LauncherArtifact == nil || result.LauncherID == nil)
+	return result.Path != nil || (result.LauncherArtifact != nil && result.LauncherID != nil)
 }
