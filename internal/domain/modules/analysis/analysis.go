@@ -125,6 +125,12 @@ func mergeResults(res1, res2 *domain.AnalysisResult) error {
 	if res1.SMLVersion == nil {
 		res1.SMLVersion = res2.SMLVersion
 	}
+	if res1.LauncherArtifact == nil {
+		res1.LauncherArtifact = res2.LauncherArtifact
+	}
+	if res1.LauncherID == nil {
+		res1.LauncherID = res2.LauncherID
+	}
 
 	res1.CrashMatches = mergeCrashMatches(res1.CrashMatches, res2.CrashMatches)
 
