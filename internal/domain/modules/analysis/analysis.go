@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"io"
 	"net/http"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -67,7 +68,16 @@ func (m *Module) AnalyseFile(ctx context.Context, file io.Reader) (*domain.Analy
 
 func (m *Module) AnalyseText(ctx context.Context, text []byte) (*domain.AnalysisResult, error) {
 	extractor := newLogExtractor(text, m)
-	return extractor.Result(ctx)
+	result, err := extractor.Result(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "error extracting information")
+	}
+
+	if result.SMLVersion != nil {
+		result.DesiredSMLVersion = m.desiredSMLVersion(result.GameVersion)
+	}
+
+	return result, nil
 }
 
 func (m *Module) analyseZipFile(ctx context.Context, zipFile *zip.Reader) (*domain.AnalysisResult, error) {
@@ -166,8 +176,6 @@ func (l *logExtractor) Result(ctx context.Context) (*domain.AnalysisResult, erro
 	l.setStringForMatch(&result.LauncherID, `(?m)LogInit: Launcher ID: (.*)$`, 1)
 	l.setStringForMatch(&result.LauncherArtifact, `(?m)LogInit: Launcher Artifact: (.*)$`, 1)
 
-	result.DesiredSMLVersion = l.desiredSMLVersion(result.GameVersion)
-
 	return &result, nil
 }
 
@@ -192,7 +200,7 @@ func (l *logExtractor) setStringForMatch(p **string, regex string, group int) {
 	}
 }
 
-func (l *logExtractor) desiredSMLVersion(gameVersion *string) *string {
+func (m *Module) desiredSMLVersion(gameVersion *string) *string {
 	if gameVersion == nil {
 		return nil
 	}
@@ -202,7 +210,7 @@ func (l *logExtractor) desiredSMLVersion(gameVersion *string) *string {
 		return nil
 	}
 
-	r, err := smr.QGetSMLVersions(l.module.smr, context.Background())
+	r, err := smr.QGetSMLVersions(m.smr, context.Background())
 	if err != nil {
 		return nil
 	}
@@ -215,4 +223,47 @@ func (l *logExtractor) desiredSMLVersion(gameVersion *string) *string {
 	}
 
 	return nil
+}
+
+func (m *Module) setPiracyInfo(result *domain.AnalysisResult) {
+	if !hasEnoughInfoForPiracyCheck(result) {
+		return
+	}
+
+	var isValidSteamPath bool
+	var isValidEpicPath bool
+
+	if result.Path != nil {
+		newPath, _ := path.Split(*result.Path) // We remove the last part of the path as it is OS-specific
+		isValidSteamPath = strings.HasSuffix(newPath, "steamapps/common/Satisfactory/Engine/Binaries/")
+		isValidEpicPath = strings.HasSuffix(newPath, "SatisfactoryExperimental/Engine/Binaries/") || strings.HasSuffix(newPath, "SatisfactoryEarlyAccess/Engine/Binaries/")
+	}
+
+	var reason string
+
+	if !isValidEpicPath && !isValidSteamPath {
+		reason = "the path is invalid"
+	}
+
+	if result.LauncherID != nil && result.LauncherArtifact != nil {
+		launcherID := *result.LauncherID
+		launcherArtifact := *result.LauncherArtifact
+		if launcherID != "epic" && launcherID != "steam" {
+			reason = "the launcher id is invalid"
+		}
+
+		if launcherID == "epic" && !(launcherArtifact == "CrabEXP" || launcherArtifact == "CrabEA") {
+			reason = "the launcher artifact is invalid"
+		}
+	}
+
+	isPirated := reason != ""
+	result.PiracyInfo = &domain.PiracyInformation{
+		IsPirated: isPirated,
+		Reason:    reason,
+	}
+}
+
+func hasEnoughInfoForPiracyCheck(result *domain.AnalysisResult) bool {
+	return result.Path == nil && (result.LauncherArtifact == nil || result.LauncherID == nil)
 }
