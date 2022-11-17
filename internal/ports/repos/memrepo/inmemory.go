@@ -57,28 +57,28 @@ type Collection[T id.IDer] struct {
 	elements []T
 }
 
-func (repo *Collection[T]) Get(ctx context.Context, ID string) (T, error) {
-	elem, _, err := repo.findWithIndex(ID)
+func (coll *Collection[T]) Get(ctx context.Context, ID string) (T, error) {
+	elem, _, err := coll.findWithIndex(ID)
 	return elem, err
 }
 
-func (repo *Collection[T]) findWithIndex(ID string) (T, int, error) {
-	for i, elem := range repo.elements {
+func (coll *Collection[T]) findWithIndex(ID string) (T, int, error) {
+	for i, elem := range coll.elements {
 		if elem.ID() == ID {
 			return elem, i, nil
 		}
 	}
-	return *new(T), 0, fmt.Errorf("element with ID '%v' does not exist", ID)
+	return *new(T), 0, repo.ErrElementNotFound
 }
 
-func (repo *Collection[T]) GetAll(ctx context.Context) ([]T, error) {
-	return slices.Clone(repo.elements), nil
+func (coll *Collection[T]) GetAll(ctx context.Context) ([]T, error) {
+	return slices.Clone(coll.elements), nil
 }
 
 //Terrible code. Need to refactor this asap
-func (repo *Collection[T]) Search(ctx context.Context, search string, fields []string) ([]T, error) {
+func (coll *Collection[T]) Search(ctx context.Context, search string, fields []string) ([]T, error) {
 	var r []T
-	for _, e := range repo.elements {
+	for _, e := range coll.elements {
 		reflected := reflect.ValueOf(e)
 		if reflected.Kind() != reflect.Struct {
 			if reflected.Kind() == reflect.String {
@@ -112,34 +112,34 @@ func (repo *Collection[T]) Search(ctx context.Context, search string, fields []s
 	return r, nil
 }
 
-func (repo *Collection[T]) Create(ctx context.Context, element T) error {
-	_, err := repo.Get(ctx, element.ID())
+func (coll *Collection[T]) Create(ctx context.Context, element T) error {
+	_, err := coll.Get(ctx, element.ID())
 	if err == nil {
 		return fmt.Errorf("element with ID '%v' already exists", element.ID())
 	}
-	repo.elements = append(repo.elements, element)
+	coll.elements = append(coll.elements, element)
 	return nil
 }
 
-func (repo *Collection[T]) Update(ctx context.Context, ID string, updateElement any) (oldElem T, newElem T, err error) {
-	found, i, err := repo.findWithIndex(ID)
+func (coll *Collection[T]) Update(ctx context.Context, ID string, updateElement any) (oldElem T, newElem T, err error) {
+	found, i, err := coll.findWithIndex(ID)
 	if err != nil {
 		return *new(T), *new(T), errors.Wrap(err, "could not get the element")
 	}
 	oldElem = found
-	err = util.PatchStruct(&repo.elements[i], updateElement)
+	err = util.PatchStruct(&coll.elements[i], updateElement)
 	if err != nil {
 		return *new(T), *new(T), errors.Wrap(err, "could not update the element")
 	}
-	return oldElem, repo.elements[i], nil
+	return oldElem, coll.elements[i], nil
 }
 
-func (repo *Collection[T]) Delete(ctx context.Context, ID string) error {
-	_, i, err := repo.findWithIndex(ID)
+func (coll *Collection[T]) Delete(ctx context.Context, ID string) error {
+	_, i, err := coll.findWithIndex(ID)
 	if err != nil {
 		return err
 	}
-	repo.elements = removeIndex(repo.elements, i)
+	coll.elements = removeIndex(coll.elements, i)
 	return nil
 }
 

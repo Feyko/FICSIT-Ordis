@@ -4,7 +4,6 @@ import (
 	"FICSIT-Ordis/internal/domain/domain"
 	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/id"
-	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/repo"
 	"FICSIT-Ordis/test"
 	"github.com/stretchr/testify/suite"
@@ -17,14 +16,12 @@ func TestCommandsModuleTestSuite(t *testing.T) {
 
 type CommandsModuleTestSuite struct {
 	suite.Suite
-	rep repo.Repository[domain.Command]
+	rep repo.Repository[id.IDer]
 	mod *Module
 }
 
 func (s *CommandsModuleTestSuite) SetupSuite() {
 	rep, err := test.GetRepo()
-	s.Require().NoError(err)
-	rep, err = repos.Retype[domain.Command, id.IDer](rep)
 	s.Require().NoError(err)
 	s.rep = rep
 }

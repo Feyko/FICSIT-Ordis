@@ -49,14 +49,12 @@ func TestExampleModuleTestSuite(t *testing.T) {
 
 type ExampleModuleTestSuite struct {
 	suite.Suite
-	rep repo.Repository[ExampleElement]
+	rep repo.Repository[id.IDer]
 	mod *ExampleModule
 }
 
 func (s *ExampleModuleTestSuite) SetupSuite() {
 	rep, err := test.GetRepo()
-	s.Require().NoError(err)
-	rep, err = repos.Retype[ExampleElement, id.IDer](rep)
 	s.Require().NoError(err)
 	s.rep = rep
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func GetCollection[T id.IDer, U id.IDer](repository repo.Repository[U], name string) (repo.Collection[T], error) {
-	repoA, err := Retype[T](repository)
+	repoA, err := retype[T](repository)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not retype repo")
 	}
@@ -26,7 +26,7 @@ func GetCollection[T id.IDer, U id.IDer](repository repo.Repository[U], name str
 }
 
 func CreateCollection[T id.IDer, U id.IDer](repository repo.Repository[U], name string) (repo.Collection[T], error) {
-	repoA, err := Retype[T](repository)
+	repoA, err := retype[T](repository)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not retype repo")
 	}
@@ -56,7 +56,7 @@ func GetOrCreateCollection[T id.IDer, U id.IDer](repository repo.Repository[U], 
 	return collection, nil
 }
 
-func Retype[newT id.IDer, oldT id.IDer](repo repo.Repository[oldT]) (repo.Repository[newT], error) {
+func retype[newT id.IDer, oldT id.IDer](repo repo.Repository[oldT]) (repo.Repository[newT], error) {
 	switch typed := repo.(type) {
 	case *memrepo.Repository[oldT]:
 		return (*memrepo.Repository[newT])(typed), nil

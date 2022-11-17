@@ -13,7 +13,7 @@ import (
 type SearchableTestSuite struct {
 	suite.Suite
 	mod *Searchable[ExampleElement]
-	rep repo.Repository[ExampleElement]
+	rep repo.Repository[id.IDer]
 }
 
 func (s *SearchableTestSuite) SafeCreateElement(element ExampleElement) {
@@ -31,15 +31,13 @@ func (s *SearchableTestSuite) SafeCreateElements(elements []ExampleElement) {
 func (s *SearchableTestSuite) SetupSuite() {
 	rep, err := test.GetRepo()
 	s.Require().NoError(err)
-	rep, err = repos.Retype[ExampleElement, id.IDer](rep)
-	s.Require().NoError(err)
 	s.rep = rep
 }
 
 func (s *SearchableTestSuite) SetupTest() {
 	collection, err := repos.CreateCollection[ExampleElement](s.rep, "Searchable")
 	s.Require().NoError(err)
-	authModule, err := auth.New(auth.Config{Secret: "test-secret"})
+	authModule, err := auth.New(auth.Config{Secret: "test-secret"}, s.rep)
 	s.Require().NoError(err)
 	s.mod = NewSearchable[ExampleElement](NewDefaultConfigNoPerm(authModule), collection)
 }

@@ -5,7 +5,6 @@ import (
 	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/domain/modules/crashes"
 	"FICSIT-Ordis/internal/id"
-	"FICSIT-Ordis/internal/ports/repos"
 	"FICSIT-Ordis/internal/ports/repos/repo"
 	"FICSIT-Ordis/test"
 	"github.com/stretchr/testify/suite"
@@ -18,7 +17,7 @@ func TestAnalysisModuleTestSuite(t *testing.T) {
 
 type AnalysisModuleTestSuite struct {
 	suite.Suite
-	rep        repo.Repository[domain.Command]
+	rep        repo.Repository[id.IDer]
 	mod        *Module
 	crashesMod *crashes.Module
 }
@@ -26,14 +25,12 @@ type AnalysisModuleTestSuite struct {
 func (s *AnalysisModuleTestSuite) SetupSuite() {
 	rep, err := test.GetRepo()
 	s.Require().NoError(err)
-	rep, err = repos.Retype[domain.Crash, id.IDer](rep)
-	s.Require().NoError(err)
 	s.rep = rep
 
 	authModule, err := auth.New(auth.Config{Secret: "test-secret"})
 	s.Require().NoError(err)
 
-	crashesMod, err := crashes.New[domain.Crash](
+	crashesMod, err := crashes.New(
 		crashes.Config{
 			auth.AuthedConfig{
 				true,
