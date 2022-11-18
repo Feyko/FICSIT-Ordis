@@ -100,7 +100,7 @@ func (s *AnalysisModuleTestSuite) TestCommandLine() {
 	result, err := s.mod.AnalyseText(nil, []byte("LogInit: Command Line:  -AUTH_LOGIN=unused -AUTH_PASSWORD=44ee2cbf3a0a4266aa052cc296a50979 -AUTH_TYPE=exchangecode -epicapp=CrabTest -epicenv=Prod -EpicPortal -epicusername=Feykoo -epicuserid=400dd576dacd47bb86815721d9dc3b28 -epiclocale=en -epicsandboxid=crab"))
 	s.Require().NoError(err)
 	s.Require().NotNil(result.CommandLine)
-	s.Equal(" -AUTH_LOGIN=unused -AUTH_PASSWORD=44ee2cbf3a0a4266aa052cc296a50979 -AUTH_TYPE=exchangecode -epicapp=CrabTest -epicenv=Prod -EpicPortal -epicusername=Feykoo -epicuserid=400dd576dacd47bb86815721d9dc3b28 -epiclocale=en -epicsandboxid=crab", *result.CommandLine)
+	s.Equal("-AUTH_LOGIN=unused -AUTH_PASSWORD=44ee2cbf3a0a4266aa052cc296a50979 -AUTH_TYPE=exchangecode -epicapp=CrabTest -epicenv=Prod -EpicPortal -epicusername=Feykoo -epicuserid=400dd576dacd47bb86815721d9dc3b28 -epiclocale=en -epicsandboxid=crab", *result.CommandLine)
 }
 
 func (s *AnalysisModuleTestSuite) TestLauncherID() {
@@ -118,8 +118,14 @@ func (s *AnalysisModuleTestSuite) TestLauncherArtifact() {
 }
 
 func (s *AnalysisModuleTestSuite) TestDesiredSMLVersion() {
-	result, err := s.mod.AnalyseText(nil, []byte("LogInit: Net CL: 201345"))
+	result, err := s.mod.AnalyseText(nil, []byte("LogInit: Net CL: 201345\nSatisfactory Mod Loader v.3.3.0"))
 	s.Require().NoError(err)
 	s.Require().NotNil(result.DesiredSMLVersion)
 	s.Require().Equal("3.3.2", *result.DesiredSMLVersion)
+}
+
+func (s *AnalysisModuleTestSuite) TestNoDesiredSMLVersionWhenNoSMLVersion() {
+	result, err := s.mod.AnalyseText(nil, []byte("LogInit: Net CL: 201345"))
+	s.Require().NoError(err)
+	s.Require().Nil(result.DesiredSMLVersion)
 }
