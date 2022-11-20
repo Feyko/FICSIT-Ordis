@@ -2,13 +2,14 @@ package auth
 
 import (
 	"FICSIT-Ordis/internal/domain/domain"
+	"FICSIT-Ordis/test"
 	"context"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/exp/slices"
 	"testing"
 )
 
-const adminToken = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJSb2xlSURzIjpbMV19.--kQQn4mF12neGr69Z47ZVol7BTeqSWVs3vujbXPAjDwAiMe-mbR1LqUyt4dXgrVAAcu_gzhaEXtaY1-ksv0uA"
+var adminToken = ""
 
 func TestAuthModuleTestSuite(t *testing.T) {
 	suite.Run(t, new(AuthModuleTestSuite))
@@ -20,54 +21,63 @@ type AuthModuleTestSuite struct {
 }
 
 func (s *AuthModuleTestSuite) SetupTest() {
-	mod, err := New(Config{Secret: "test-secret"})
+	rep, err := test.GetRepo()
 	s.Require().NoError(err)
+
+	mod, err := New(Config{Secret: "test-secret"}, rep)
+	s.Require().NoError(err)
+	token, err := mod.NewTokenNoAuth(domain.RoleAdmin.ID)
+	s.Require().NoError(err)
+	adminToken = token.String
+
 	s.mod = mod
 }
 
 func (s *AuthModuleTestSuite) TestNewToken() {
-	_, err := s.mod.NewToken()
+	_, err := s.mod.NewTokenNoAuth()
 	s.Require().NoError(err)
 }
 
 func (s *AuthModuleTestSuite) TestNewTokenIsValid() {
-	token, err := s.mod.NewToken()
+	token, err := s.mod.NewTokenNoAuth()
 	s.Require().NoError(err)
-	err = s.mod.ValidateToken(&token)
+	err = s.mod.ValidateTokenString(&token)
 	s.Require().NoError(err)
 }
 
 func (s *AuthModuleTestSuite) TestInvalidToken() {
-	err := s.mod.ValidateToken(&Token{})
+	err := s.mod.ValidateTokenString(&Token{})
 	s.Require().Error(err)
 }
 
 func (s *AuthModuleTestSuite) TestNewTokenWithRolesIsValid() {
-	token, err := s.mod.NewToken(domain.RoleAdmin, domain.RoleModerator)
+	token, err := s.mod.NewTokenNoAuth(domain.RoleAdmin.ID, domain.RoleModerator.ID)
 	s.Require().NoError(err)
-	err = s.mod.ValidateToken(&token)
+	err = s.mod.ValidateTokenString(&token)
 	s.Require().NoError(err)
 }
 
 func (s *AuthModuleTestSuite) TestNewTokenWithRolesHasRoles() {
-	roles := []domain.Role{domain.RoleAdmin, domain.RoleModerator}
-	token, err := s.mod.NewToken(roles...)
+	roleIDs := []int{domain.RoleAdmin.ID, domain.RoleModerator.ID}
+	roles := []domain.Role{domain.Roles[roleIDs[0]], domain.Roles[roleIDs[1]]}
+	token, err := s.mod.NewTokenNoAuth(roleIDs...)
 	s.Require().NoError(err)
 	s.Equal(roles, token.Roles)
 }
 
 func (s *AuthModuleTestSuite) TestNewTokenWithRolesHasRolesValidated() {
-	roles := []domain.Role{domain.RoleAdmin, domain.RoleModerator}
-	token, err := s.mod.NewToken(roles...)
+	roleIDs := []int{domain.RoleAdmin.ID, domain.RoleModerator.ID}
+	roles := []domain.Role{domain.Roles[roleIDs[0]], domain.Roles[roleIDs[1]]}
+	token, err := s.mod.NewTokenNoAuth(roleIDs...)
 	s.Require().NoError(err)
-	err = s.mod.ValidateToken(&token)
+	err = s.mod.ValidateTokenString(&token)
 	s.Require().NoError(err)
 	s.Equal(roles, token.Roles)
 }
 
 func (s *AuthModuleTestSuite) TestTokenCorrectPermissionsOneRole() {
 	perms := domain.RoleAdmin.Permissions
-	token, err := s.mod.NewToken(domain.RoleAdmin)
+	token, err := s.mod.NewTokenNoAuth(domain.RoleAdmin.ID)
 	s.Require().NoError(err)
 	s.Equal(perms, token.Permissions)
 }
@@ -81,7 +91,7 @@ func (s *AuthModuleTestSuite) TestTokenCorrectPermissionsMultipleRoles() {
 		delete(domain.Roles, len(domain.Roles)-1)
 	}()
 
-	token, err := s.mod.NewToken(domain.Roles[len(domain.Roles)-1], domain.Roles[len(domain.Roles)-2])
+	token, err := s.mod.NewTokenNoAuth(len(domain.Roles)-1, len(domain.Roles)-2)
 	s.Require().NoError(err)
 	slices.Sort(token.Permissions)
 	slices.Sort(allPerms)
@@ -93,7 +103,7 @@ func (s *AuthModuleTestSuite) TestTokenHasPermission() {
 	defer func() {
 		delete(domain.Roles, len(domain.Roles)-1)
 	}()
-	token, err := s.mod.NewToken(domain.Roles[len(domain.Roles)-1])
+	token, err := s.mod.NewTokenNoAuth(len(domain.Roles) - 1)
 	s.Require().NoError(err)
 	s.Require().True(token.HasPermissions(domain.PermissionTicketManagement))
 	s.Require().False(token.HasPermissions(domain.PermissionContentEditing))

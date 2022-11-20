@@ -6,6 +6,7 @@ require (
 	git.sr.ht/~emersion/gqlclient v0.0.0-20221107153406-1d1d46a724f4
 	github.com/99designs/gqlgen v0.17.20
 	github.com/arangodb/go-driver v1.4.0
+	github.com/btcsuite/btcutil v1.0.2
 	github.com/fatih/structs v1.1.0
 	github.com/go-chi/chi v1.5.4
 	github.com/golang-jwt/jwt v3.2.2+incompatible

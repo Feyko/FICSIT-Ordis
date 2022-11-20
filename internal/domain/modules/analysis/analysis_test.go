@@ -27,7 +27,7 @@ func (s *AnalysisModuleTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.rep = rep
 
-	authModule, err := auth.New(auth.Config{Secret: "test-secret"})
+	authModule, err := auth.New(auth.Config{Secret: "test-secret"}, rep)
 	s.Require().NoError(err)
 
 	crashesMod, err := crashes.New(

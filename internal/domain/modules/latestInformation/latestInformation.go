@@ -54,7 +54,8 @@ func (m *Module) Get(ctx context.Context) (*domain.LatestInformation, error) {
 func (m *Module) Set(ctx context.Context, text string) error {
 	wrapper, err := m.base.Get(ctx, latestInfoID)
 	if err != nil {
-		return m.base.Create(ctx, latestInformation{ID_: latestInfoID, Wrapped: domain.LatestInformation{Text: text, Revision: 1}})
+
+		return m.base.Create(ctx, latestInformation(id.Wrap(domain.LatestInformation{Text: text, Revision: 1}, latestInfoID)))
 	}
 	current := wrapper.Wrapped
 	if current.Text == text {

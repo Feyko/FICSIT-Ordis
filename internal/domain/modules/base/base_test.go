@@ -62,7 +62,7 @@ func (s *ExampleModuleTestSuite) SetupSuite() {
 func (s *ExampleModuleTestSuite) SetupTest() {
 	collection, err := repos.CreateCollection[ExampleElement](s.rep, "Example")
 	s.Require().NoError(err)
-	authModule, err := auth.New(auth.Config{Secret: "test-secret"})
+	authModule, err := auth.New(auth.Config{Secret: "test-secret"}, s.rep)
 	s.Require().NoError(err)
 	s.mod = &ExampleModule{*New[ExampleElement](NewDefaultConfigNoPerm(authModule), collection)}
 }

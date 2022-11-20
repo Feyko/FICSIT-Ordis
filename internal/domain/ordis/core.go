@@ -29,14 +29,14 @@ type Config struct {
 }
 
 func New(conf Config) (Ordis, error) {
-	authModule, err := auth.New(conf.Auth)
-	if err != nil {
-		return Ordis{}, errors.Wrap(err, "could not create the auth module")
-	}
-
 	repo, err := arango.New[id.IDer](conf.Arango)
 	if err != nil {
 		return Ordis{}, errors.Wrap(err, "could not create the repository")
+	}
+
+	authModule, err := auth.New(conf.Auth, repo)
+	if err != nil {
+		return Ordis{}, errors.Wrap(err, "could not create the auth module")
 	}
 
 	fillAuthConfig(authModule, &conf.Commands.AuthedConfig)
