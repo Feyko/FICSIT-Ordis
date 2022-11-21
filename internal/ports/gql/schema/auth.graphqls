@@ -1,11 +1,5 @@
-type Role {
-    id: Int!
-    name: String!
-    permissions: [Permission!]!
-}
-
-enum Permission {
-    ContentEditing
-    TokenCreation
-    TicketManagement
+extend type Mutation {
+    createNewToken(roleIDs: [Int!]): String!
+    revokeToken(tokenID: String!): Boolean!
+    revokeCurrentToken: Boolean!
 }
