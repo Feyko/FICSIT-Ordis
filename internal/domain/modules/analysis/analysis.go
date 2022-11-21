@@ -33,6 +33,7 @@ type Module struct {
 	smr           *gqlclient.Client
 }
 
+// TODO: Test steam log zip url
 func (m *Module) AnalyseFileURL(ctx context.Context, url string) (*domain.AnalysisResult, error) {
 	resp, err := http.Get(url)
 	if err != nil {

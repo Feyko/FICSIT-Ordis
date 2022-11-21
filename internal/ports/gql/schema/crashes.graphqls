@@ -29,6 +29,7 @@ extend type Query {
     listAllCrashes: [Crash!]
     findCrash(name: String!): Crash
     crashAnalysis(text: String!): [CrashMatch!]
+    searchCrashes(search: String!): [Crash!]!
 }
 
 extend type Mutation {

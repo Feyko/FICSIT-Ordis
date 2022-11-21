@@ -8,7 +8,6 @@ import (
 	"FICSIT-Ordis/internal/ports/gql/generated"
 	"FICSIT-Ordis/internal/ports/gql/model"
 	"context"
-
 	"github.com/pkg/errors"
 )
 
@@ -52,6 +51,11 @@ func (r *queryResolver) FindCommand(ctx context.Context, name string) (*domain.C
 // ExecuteCommand is the resolver for the executeCommand field.
 func (r *queryResolver) ExecuteCommand(ctx context.Context, text string) (*domain.Response, error) {
 	return r.O.Commands.Execute(ctx, text)
+}
+
+// SearchCommands is the resolver for the searchCommands field.
+func (r *queryResolver) SearchCommands(ctx context.Context, search string) ([]domain.Command, error) {
+	return r.O.Commands.Search(ctx, search)
 }
 
 // Response is the resolver for the response field.

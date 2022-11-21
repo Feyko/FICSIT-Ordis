@@ -20,6 +20,7 @@ extend type Query {
     listAllCommands: [Command!]!
     findCommand(name: String!): Command
     executeCommand(text: String!): Response
+    searchCommands(search: String!): [Command!]!
 }
 
 extend type Mutation {

@@ -44,6 +44,11 @@ func (r *queryResolver) CrashAnalysis(ctx context.Context, text string) ([]domai
 	return r.O.Crashes.Analyse(ctx, text)
 }
 
+// SearchCrashes is the resolver for the searchCrashes field.
+func (r *queryResolver) SearchCrashes(ctx context.Context, search string) ([]domain.Crash, error) {
+	return r.O.Crashes.Search(ctx, search)
+}
+
 // Response is the resolver for the response field.
 func (r *crashCreationResolver) Response(ctx context.Context, obj *model.CrashCreation, data *model.ResponseInput) error {
 	obj.Response = domain.Response(*data)

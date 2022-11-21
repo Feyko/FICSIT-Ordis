@@ -20,6 +20,8 @@ type Searchable[E id.Searchable] struct {
 	searchFields []string
 }
 
+// TODO: Move search to tags
+// TODO: Deep search
 func (s *Searchable[E]) Search(ctx context.Context, search string) ([]E, error) {
 	return s.Collection.Search(ctx, search, s.searchFields)
 }
