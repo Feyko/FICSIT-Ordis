@@ -9,12 +9,13 @@ import (
 	"testing"
 )
 
-var adminToken = ""
+var adminToken string
 
 func TestAuthModuleTestSuite(t *testing.T) {
 	suite.Run(t, new(AuthModuleTestSuite))
 }
 
+// TODO: Clean tokens after tests
 type AuthModuleTestSuite struct {
 	suite.Suite
 	mod *Module
@@ -41,19 +42,20 @@ func (s *AuthModuleTestSuite) TestNewToken() {
 func (s *AuthModuleTestSuite) TestNewTokenIsValid() {
 	token, err := s.mod.NewTokenNoAuth()
 	s.Require().NoError(err)
-	err = s.mod.ValidateTokenString(&token)
+	_, _, err = s.mod.ValidateTokenString(token.String)
 	s.Require().NoError(err)
 }
 
 func (s *AuthModuleTestSuite) TestInvalidToken() {
-	err := s.mod.ValidateTokenString(&Token{})
-	s.Require().Error(err)
+	_, valid, err := s.mod.ValidateTokenString("")
+	s.Require().NoError(err)
+	s.Require().False(valid)
 }
 
 func (s *AuthModuleTestSuite) TestNewTokenWithRolesIsValid() {
 	token, err := s.mod.NewTokenNoAuth(domain.RoleAdmin.ID, domain.RoleModerator.ID)
 	s.Require().NoError(err)
-	err = s.mod.ValidateTokenString(&token)
+	_, _, err = s.mod.ValidateTokenString(token.String)
 	s.Require().NoError(err)
 }
 
@@ -70,7 +72,7 @@ func (s *AuthModuleTestSuite) TestNewTokenWithRolesHasRolesValidated() {
 	roles := []domain.Role{domain.Roles[roleIDs[0]], domain.Roles[roleIDs[1]]}
 	token, err := s.mod.NewTokenNoAuth(roleIDs...)
 	s.Require().NoError(err)
-	err = s.mod.ValidateTokenString(&token)
+	_, _, err = s.mod.ValidateTokenString(token.String)
 	s.Require().NoError(err)
 	s.Equal(roles, token.Roles)
 }
