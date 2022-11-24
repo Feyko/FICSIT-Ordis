@@ -15,10 +15,18 @@ func TestAuthModuleTestSuite(t *testing.T) {
 	suite.Run(t, new(AuthModuleTestSuite))
 }
 
-// TODO: Clean tokens after tests
 type AuthModuleTestSuite struct {
 	suite.Suite
-	mod *Module
+	mod          *Module
+	tokenToClean Token
+}
+
+func (s *AuthModuleTestSuite) TearDownTest() {
+	if s.tokenToClean.TokenID != "" {
+		err := s.mod.RevokeTokenIDNoAuth(s.tokenToClean.TokenID)
+		s.tokenToClean = Token{}
+		s.Require().NoError(err)
+	}
 }
 
 func (s *AuthModuleTestSuite) SetupTest() {
@@ -35,12 +43,15 @@ func (s *AuthModuleTestSuite) SetupTest() {
 }
 
 func (s *AuthModuleTestSuite) TestNewToken() {
-	_, err := s.mod.NewTokenNoAuth()
+	token, err := s.mod.NewTokenNoAuth()
+	s.tokenToClean = token
 	s.Require().NoError(err)
+
 }
 
 func (s *AuthModuleTestSuite) TestNewTokenIsValid() {
 	token, err := s.mod.NewTokenNoAuth()
+	s.tokenToClean = token
 	s.Require().NoError(err)
 	_, _, err = s.mod.ValidateTokenString(token.String)
 	s.Require().NoError(err)
@@ -54,6 +65,7 @@ func (s *AuthModuleTestSuite) TestInvalidToken() {
 
 func (s *AuthModuleTestSuite) TestNewTokenWithRolesIsValid() {
 	token, err := s.mod.NewTokenNoAuth(domain.RoleAdmin.ID, domain.RoleModerator.ID)
+	s.tokenToClean = token
 	s.Require().NoError(err)
 	_, _, err = s.mod.ValidateTokenString(token.String)
 	s.Require().NoError(err)
@@ -63,6 +75,7 @@ func (s *AuthModuleTestSuite) TestNewTokenWithRolesHasRoles() {
 	roleIDs := []int{domain.RoleAdmin.ID, domain.RoleModerator.ID}
 	roles := []domain.Role{domain.Roles[roleIDs[0]], domain.Roles[roleIDs[1]]}
 	token, err := s.mod.NewTokenNoAuth(roleIDs...)
+	s.tokenToClean = token
 	s.Require().NoError(err)
 	s.Equal(roles, token.Roles)
 }
@@ -71,6 +84,7 @@ func (s *AuthModuleTestSuite) TestNewTokenWithRolesHasRolesValidated() {
 	roleIDs := []int{domain.RoleAdmin.ID, domain.RoleModerator.ID}
 	roles := []domain.Role{domain.Roles[roleIDs[0]], domain.Roles[roleIDs[1]]}
 	token, err := s.mod.NewTokenNoAuth(roleIDs...)
+	s.tokenToClean = token
 	s.Require().NoError(err)
 	_, _, err = s.mod.ValidateTokenString(token.String)
 	s.Require().NoError(err)
@@ -80,6 +94,7 @@ func (s *AuthModuleTestSuite) TestNewTokenWithRolesHasRolesValidated() {
 func (s *AuthModuleTestSuite) TestTokenCorrectPermissionsOneRole() {
 	perms := domain.RoleAdmin.Permissions
 	token, err := s.mod.NewTokenNoAuth(domain.RoleAdmin.ID)
+	s.tokenToClean = token
 	s.Require().NoError(err)
 	s.Equal(perms, token.Permissions)
 }
@@ -94,6 +109,7 @@ func (s *AuthModuleTestSuite) TestTokenCorrectPermissionsMultipleRoles() {
 	}()
 
 	token, err := s.mod.NewTokenNoAuth(len(domain.Roles)-1, len(domain.Roles)-2)
+	s.tokenToClean = token
 	s.Require().NoError(err)
 	slices.Sort(token.Permissions)
 	slices.Sort(allPerms)
@@ -106,6 +122,7 @@ func (s *AuthModuleTestSuite) TestTokenHasPermission() {
 		delete(domain.Roles, len(domain.Roles)-1)
 	}()
 	token, err := s.mod.NewTokenNoAuth(len(domain.Roles) - 1)
+	s.tokenToClean = token
 	s.Require().NoError(err)
 	s.Require().True(token.HasPermissions(domain.PermissionTicketManagement))
 	s.Require().False(token.HasPermissions(domain.PermissionContentEditing))
