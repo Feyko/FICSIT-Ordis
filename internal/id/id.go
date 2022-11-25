@@ -9,11 +9,6 @@ type IDer interface {
 	ID() string
 }
 
-type Searchable interface {
-	IDer
-	SearchFields() []string
-}
-
 func ToMap(v IDer) (map[string]any, error) {
 	asMap, err := AnyToMapNoID(v)
 	if err != nil {

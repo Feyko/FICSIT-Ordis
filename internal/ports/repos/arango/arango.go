@@ -236,33 +236,33 @@ return OLD`
 	return nil
 }
 
-func (c *Collection[T]) Search(ctx context.Context, search string, fields []string) ([]T, error) {
+func (c *Collection[T]) Search(ctx context.Context, search string) ([]T, error) {
 	params := map[string]any{}
 
-	t := reflect.TypeOf(*new(T))
+	//t := reflect.TypeOf(*new(T))
 
-	filters := make([]string, 0, len(fields))
-
-	for _, fieldName := range fields {
-		field, ok := t.FieldByName(fieldName)
-		if !ok {
-			continue
-		}
-
-		var filter string
-		kind := field.Type.Kind()
-		switch kind {
-		case reflect.Slice, reflect.Array:
-			filter = fmt.Sprintf(`"%v" in doc.%v`, search, fieldName)
-		default:
-			filter = fmt.Sprintf(`doc.%v == "%v"`, fieldName, search)
-		}
-
-		filters = append(filters, filter)
-	}
+	//filters := make([]string, 0, len(fields))
+	//
+	//for _, fieldName := range fields {
+	//	field, ok := t.FieldByName(fieldName)
+	//	if !ok {
+	//		continue
+	//	}
+	//
+	//	var filter string
+	//	kind := field.Type.Kind()
+	//	switch kind {
+	//	case reflect.Slice, reflect.Array:
+	//		filter = fmt.Sprintf(`"%v" in doc.%v`, search, fieldName)
+	//	default:
+	//		filter = fmt.Sprintf(`doc.%v == "%v"`, fieldName, search)
+	//	}
+	//
+	//	filters = append(filters, filter)
+	//}
 
 	query := "\tfilter "
-	query += strings.Join(filters, " || ")
+	//query += strings.Join(filters, " || ")
 	query += "\n\treturn doc"
 	return runQueryInCollection(ctx, c, query, params)
 }

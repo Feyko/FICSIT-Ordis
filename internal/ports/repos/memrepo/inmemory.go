@@ -76,7 +76,7 @@ func (coll *Collection[T]) GetAll(ctx context.Context) ([]T, error) {
 }
 
 //Terrible code. Need to refactor this asap
-func (coll *Collection[T]) Search(ctx context.Context, search string, fields []string) ([]T, error) {
+func (coll *Collection[T]) Search(ctx context.Context, search string) ([]T, error) {
 	var r []T
 	for _, e := range coll.elements {
 		reflected := reflect.ValueOf(e)
@@ -90,24 +90,24 @@ func (coll *Collection[T]) Search(ctx context.Context, search string, fields []s
 			return nil, errors.New("trying to search an invalid type. Search only supports structs and strings")
 		}
 
-		for _, fieldName := range fields {
-			field := reflected.FieldByName(fieldName)
-			if field.Kind() == reflect.Array || field.Kind() == reflect.Slice {
-				fieldLen := field.Len()
-				for i := 0; i < fieldLen; i++ {
-					fieldValue := field.Index(i)
-					fieldString := fieldValue.String()
-					if fieldString == search {
-						r = append(r, e)
-						continue
-					}
-				}
-			}
-			fieldString := field.String() // Might be too broad
-			if fieldString == search {
-				r = append(r, e)
-			}
-		}
+		//for _, fieldName := range fields {
+		//	field := reflected.FieldByName(fieldName)
+		//	if field.Kind() == reflect.Array || field.Kind() == reflect.Slice {
+		//		fieldLen := field.Len()
+		//		for i := 0; i < fieldLen; i++ {
+		//			fieldValue := field.Index(i)
+		//			fieldString := fieldValue.String()
+		//			if fieldString == search {
+		//				r = append(r, e)
+		//				continue
+		//			}
+		//		}
+		//	}
+		//	fieldString := field.String() // Might be too broad
+		//	if fieldString == search {
+		//		r = append(r, e)
+		//	}
+		//}
 	}
 	return r, nil
 }

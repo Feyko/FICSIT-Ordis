@@ -7,6 +7,9 @@ import (
 	"FICSIT-Ordis/internal/ports/repos/repo"
 	"fmt"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/slices"
+	"reflect"
+	"strings"
 )
 
 func GetCollection[T id.IDer, U id.IDer](repository repo.Repository[U], name string) (repo.Collection[T], error) {
@@ -65,4 +68,50 @@ func retype[newT id.IDer, oldT id.IDer](repo repo.Repository[oldT]) (repo.Reposi
 	default:
 		return nil, errors.New("unsupported repository type")
 	}
+}
+
+func GetTypeInfo(v any) (TypeInfo, error) {
+	typ := reflect.TypeOf(v)
+
+	numFields := typ.NumField()
+
+	fields := make([]FieldInfo, numFields)
+
+	for i := 0; i < numFields; i++ {
+		field := typ.Field(i)
+
+		info, err := fillFieldInfo(field)
+		if err != nil {
+			return TypeInfo{}, errors.Wrap(err, "error getting the tag values")
+		}
+		fields[i] = info
+	}
+
+	return TypeInfo{
+		Fields: fields,
+	}, nil
+}
+
+type TypeInfo struct {
+	Fields []FieldInfo
+}
+
+type FieldInfo struct {
+	reflect.StructField
+	ToSearch bool
+}
+
+func fillFieldInfo(field reflect.StructField) (FieldInfo, error) {
+	tag := field.Tag.Get("repos")
+	stringValues := strings.Split(tag, ",")
+	if len(stringValues) == 0 {
+		return FieldInfo{}, nil
+	}
+	var info FieldInfo
+
+	if slices.Contains(stringValues, "search") {
+		info.ToSearch = true
+	}
+
+	return info, nil
 }

@@ -18,7 +18,7 @@ type Repository[T id.IDer] interface {
 type Collection[E id.IDer] interface {
 	Get(ctx context.Context, ID string) (E, error)
 	GetAll(ctx context.Context) ([]E, error)
-	Search(ctx context.Context, search string, fields []string) ([]E, error)
+	Search(ctx context.Context, search string) ([]E, error)
 
 	Create(ctx context.Context, element E) error
 	Update(ctx context.Context, ID string, updateElement any) (old E, new E, err error)
