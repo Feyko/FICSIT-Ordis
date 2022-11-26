@@ -13,9 +13,9 @@ import (
 )
 
 type ExampleElement struct {
-	Name,
-	Response,
-	Media string
+	Name     string `repos:"search"`
+	Response string `repos:"search"`
+	Media    string
 }
 
 func (elem ExampleElement) ID() string {

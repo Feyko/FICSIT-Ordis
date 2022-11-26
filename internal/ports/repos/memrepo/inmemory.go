@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/exp/slices"
 	"reflect"
+	"strings"
 )
 
 func New() repo.Repository[id.IDer] {
@@ -77,39 +78,67 @@ func (coll *Collection[T]) GetAll(ctx context.Context) ([]T, error) {
 
 //Terrible code. Need to refactor this asap
 func (coll *Collection[T]) Search(ctx context.Context, search string) ([]T, error) {
-	var r []T
-	for _, e := range coll.elements {
-		reflected := reflect.ValueOf(e)
-		if reflected.Kind() != reflect.Struct {
-			if reflected.Kind() == reflect.String {
-				if reflected.String() == search {
-					r = append(r, e)
-					continue
-				}
-			}
-			return nil, errors.New("trying to search an invalid type. Search only supports structs and strings")
+	var found []T
+	for _, elem := range coll.elements {
+		matched, err := searchInElement(elem, search)
+		if err != nil {
+			return nil, errors.Wrap(err, "error searching an element")
 		}
-
-		//for _, fieldName := range fields {
-		//	field := reflected.FieldByName(fieldName)
-		//	if field.Kind() == reflect.Array || field.Kind() == reflect.Slice {
-		//		fieldLen := field.Len()
-		//		for i := 0; i < fieldLen; i++ {
-		//			fieldValue := field.Index(i)
-		//			fieldString := fieldValue.String()
-		//			if fieldString == search {
-		//				r = append(r, e)
-		//				continue
-		//			}
-		//		}
-		//	}
-		//	fieldString := field.String() // Might be too broad
-		//	if fieldString == search {
-		//		r = append(r, e)
-		//	}
-		//}
+		if matched {
+			found = append(found, elem)
+		}
 	}
-	return r, nil
+	return found, nil
+}
+
+func searchInElement(elem any, search string) (bool, error) {
+	typeInfo, err := repo.GetTypeInfo(elem)
+	if err != nil {
+		return false, errors.Wrap(err, "error getting type info")
+	}
+
+	value := reflect.ValueOf(elem)
+
+	for _, field := range typeInfo.Fields {
+		if field.ToSearch {
+			matched := searchInField(value.FieldByIndex(field.Index), search)
+			if matched {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+func searchInField(value reflect.Value, search string) bool {
+	switch value.Kind() {
+	case reflect.Pointer, reflect.Interface:
+		return searchInField(value.Elem(), search)
+	case reflect.Func, reflect.Uintptr, reflect.UnsafePointer, reflect.Chan, reflect.Invalid:
+		return false
+	case reflect.Array, reflect.Slice:
+		length := value.Len()
+		for i := 0; i < length; i++ {
+			matched := searchInField(value.Index(i), search)
+			if matched {
+				return true
+			}
+		}
+	case reflect.Map:
+		iter := value.MapRange()
+		for iter.Next() {
+			matched := searchInField(iter.Value(), search)
+			if matched {
+				return true
+			}
+		}
+	case reflect.Struct:
+		return false // We search in all sub-structs too, no need for further handling here
+	default:
+		return strings.Contains(value.String(), search)
+	}
+
+	return false
 }
 
 func (coll *Collection[T]) Create(ctx context.Context, element T) error {
