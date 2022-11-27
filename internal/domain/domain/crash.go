@@ -8,14 +8,10 @@ type CrashUpdate struct {
 }
 
 type Crash struct {
-	Name        string   `json:"name"`
-	Description *string  `json:"description"`
-	Regexes     []string `json:"regexes"`
-	Response    Response `json:"response"`
-}
-
-func (c Crash) SearchFields() []string {
-	return []string{"Name", "Description", "Regexes", "Response"}
+	Name        string   `json:"name" repos:"search"`
+	Description *string  `json:"description" repos:"search"`
+	Regexes     []string `json:"regexes" repos:"search"`
+	Response    Response `json:"response" repos:"search"`
 }
 
 func (c Crash) ID() string {

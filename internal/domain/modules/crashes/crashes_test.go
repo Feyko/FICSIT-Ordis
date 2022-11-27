@@ -14,6 +14,7 @@ func TestCrashesModuleTestSuite(t *testing.T) {
 	suite.Run(t, new(CrashesModuleTestSuite))
 }
 
+// TODO: Add search tests
 type CrashesModuleTestSuite struct {
 	suite.Suite
 	rep repo.Repository[id.IDer]

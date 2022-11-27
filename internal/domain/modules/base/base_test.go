@@ -22,10 +22,6 @@ func (elem ExampleElement) ID() string {
 	return elem.Name
 }
 
-func (elem ExampleElement) SearchFields() []string {
-	return []string{"Name", "Response"}
-}
-
 type UpdateExampleElement struct {
 	Name,
 	Response,

@@ -14,6 +14,7 @@ func TestCommandsModuleTestSuite(t *testing.T) {
 	suite.Run(t, new(CommandsModuleTestSuite))
 }
 
+// TODO: Add search tests
 type CommandsModuleTestSuite struct {
 	suite.Suite
 	rep repo.Repository[id.IDer]
