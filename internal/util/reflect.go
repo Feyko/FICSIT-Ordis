@@ -7,17 +7,22 @@ import (
 
 // Takes a pointer to a struct to patch and a pointer to a patch struct.
 // Any exported pointer field of the patch struct with a matching exported field (name + type) in the patched struct will have its value copied over
-func PatchStruct(v any, patch any) error {
+func PatchStruct(v, patch any) error {
 	structV, isPtr, ok := getStructValue(reflect.ValueOf(v))
 	if !ok || !isPtr {
 		return errors.New("The patched value must be a pointer to a struct")
 	}
-	structT := structV.Type()
+
 	patchV, _, ok := getStructValue(reflect.ValueOf(patch))
 	if !ok {
 		return errors.New("The patch must be a struct")
 	}
 
+	return patchStructNoCheck(structV, patchV)
+}
+
+func patchStructNoCheck(structV, patchV reflect.Value) error {
+	structT := structV.Type()
 	patchT := patchV.Type()
 
 	numPatchFields := patchT.NumField()
@@ -39,9 +44,24 @@ func PatchStruct(v any, patch any) error {
 		}
 		structField := structV.FieldByIndex(structFieldT.Index)
 
-		if structField.Type() != patchField.Type() {
+		if structField.Kind() == reflect.Struct && patchField.Kind() == reflect.Struct {
+			if structField.Type() == patchField.Type() {
+				structField.Set(patchField)
+				continue
+			}
+
+			err := patchStructNoCheck(structField, patchField)
+			if err != nil {
+				return errors.Wrap(err, "error updating struct field")
+			}
 			continue
 		}
+
+		if structField.Type() != patchField.Type() {
+			return errors.Errorf("Incompatible types between value and patch on fields %s.%s.%s and %s.%s.%s",
+				structT.PkgPath(), structT.Name(), structFieldT.Name, patchT.PkgPath(), patchT.Name(), patchFieldT.Name)
+		}
+
 		structField.Set(patchField)
 	}
 	return nil

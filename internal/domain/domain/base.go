@@ -6,6 +6,6 @@ type Response struct {
 }
 
 type ResponseUpdate struct {
-	Text       *string
+	Text       **string
 	MediaLinks []string
 }

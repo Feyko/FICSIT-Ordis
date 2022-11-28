@@ -1,6 +1,7 @@
 package base
 
 import (
+	"FICSIT-Ordis/internal/domain/domain"
 	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos"
@@ -13,9 +14,9 @@ import (
 )
 
 type ExampleElement struct {
-	Name     string `repos:"search"`
-	Response string `repos:"search"`
-	Media    string
+	Name      string          `repos:"search"`
+	Response  domain.Response `repos:"search"`
+	Something string
 }
 
 func (elem ExampleElement) ID() string {
@@ -23,9 +24,8 @@ func (elem ExampleElement) ID() string {
 }
 
 type UpdateExampleElement struct {
-	Name,
-	Response,
-	Media *string
+	Name     *string
+	Response *domain.ResponseUpdate
 }
 
 func (u UpdateExampleElement) ID() string {
@@ -68,9 +68,11 @@ func (s *ExampleModuleTestSuite) TearDownTest() {
 	s.Require().NoError(err)
 }
 
+var defaultResponseText = "Response"
+var defaultResponse = domain.Response{Text: &defaultResponseText}
 var defaultElement = ExampleElement{
 	Name:     "aya",
-	Response: "bop",
+	Response: defaultResponse,
 }
 
 //func newModuleWithDefaultCommand(t *testing.T, commands []ExampleElement) *ExampleModule {
@@ -184,21 +186,31 @@ func (s *ExampleModuleTestSuite) TestDelete() {
 
 func (s *ExampleModuleTestSuite) TestUpdate() {
 	t := s.T()
-	expected := ExampleElement{Name: defaultElement.Name, Response: "newResponse"}
-
-	newResponse := "newResponse"
-	updateElement := UpdateExampleElement{Response: &newResponse}
+	newResponseText := "newResponse"
+	newResponse := domain.Response{Text: &newResponseText}
+	expected := ExampleElement{Name: defaultElement.Name, Response: newResponse}
+	newResponseTextPtr := &newResponseText
+	responseUpdate := domain.ResponseUpdate{Text: &newResponseTextPtr}
+	updateElement := UpdateExampleElement{Response: &responseUpdate}
 
 	createDefaultCommandChecked(t, s.mod)
 
 	_, r, err := s.mod.Update(nil, defaultElement.Name, updateElement)
 
 	require.NoError(t, err, "Error when trying to update an element")
-	assert.Equal(t, expected, r, "Returned element is not updated")
+	//TODO: This is shitty and it'd be nice to find a library to do it better
+	checkElementEqual(t, expected, r, "Returned element is not updated")
 
 	cmd := checkedGet(t, s.mod, defaultElement.Name)
 
-	assert.Equal(t, expected, cmd, "ExampleElement was not updated")
+	checkElementEqual(t, expected, cmd, "ExampleElement was not updated")
+}
+
+func checkElementEqual(t *testing.T, expected, got ExampleElement, message string) {
+	assert.EqualValues(t, expected.Name, got.Name, message)
+	assert.EqualValues(t, *expected.Response.Text, *got.Response.Text, message)
+	assert.EqualValues(t, expected.Response.MediaLinks, got.Response.MediaLinks, message)
+	assert.EqualValues(t, expected.Something, got.Something, message)
 }
 
 func (s *ExampleModuleTestSuite) TestDeleteNonExistentElemErrors() {

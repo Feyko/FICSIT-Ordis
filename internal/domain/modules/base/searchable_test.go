@@ -1,6 +1,7 @@
 package base
 
 import (
+	"FICSIT-Ordis/internal/domain/domain"
 	"FICSIT-Ordis/internal/domain/modules/auth"
 	"FICSIT-Ordis/internal/id"
 	"FICSIT-Ordis/internal/ports/repos"
@@ -47,15 +48,18 @@ func (s *SearchableTestSuite) TearDownTest() {
 	s.Require().NoError(err)
 }
 
+var defaultResponseToSearchText = "SearchMe"
+var defaultResponseToSearch = domain.Response{Text: &defaultResponseToSearchText}
+
 func (s *SearchableTestSuite) TestSearchValid() {
 	input := []ExampleElement{
-		{"Name", "SearchMe", "Media"},
-		{"SearchMe", "Response", "Media"},
-		{"UniqueName", "Response", "DONTSearchMe"},
+		{"Name", defaultResponseToSearch, "Media"},
+		{"SearchMe", defaultResponse, "Media"},
+		{"UniqueName", defaultResponse, "DONTSearchMe"},
 	}
 	expected := []ExampleElement{
-		{"Name", "SearchMe", "Media"},
-		{"SearchMe", "Response", "Media"},
+		{"Name", defaultResponseToSearch, "Media"},
+		{"SearchMe", defaultResponse, "Media"},
 	}
 
 	s.SafeCreateElements(input)

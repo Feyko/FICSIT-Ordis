@@ -10,6 +10,15 @@ type value struct {
 	I  int
 	P  *string
 	SL []string
+	ST sub
+}
+
+type sub struct {
+	S string
+}
+
+type subPatch struct {
+	S *string
 }
 
 type patch struct {
@@ -17,6 +26,11 @@ type patch struct {
 	I  *int
 	P  **string
 	SL []string
+	ST *sub
+}
+
+type valueSubPatch struct {
+	ST *subPatch
 }
 
 type invalidPatch struct {
@@ -39,6 +53,7 @@ func (s *ReflectTestSuite) SetupTest() {
 		I:  42,
 		P:  &defaultString,
 		SL: []string{defaultString, "AnotherString"},
+		ST: sub{S: defaultString},
 	}
 	newString := "Patched"
 	newStringPtr := &newString
@@ -47,12 +62,14 @@ func (s *ReflectTestSuite) SetupTest() {
 		I:  Ptr(420),
 		P:  Ptr(newStringPtr),
 		SL: []string{newString},
+		ST: &sub{S: newString},
 	}
 	s.defaultExpected = value{
 		S:  newString,
 		I:  420,
 		P:  newStringPtr,
 		SL: []string{newString},
+		ST: sub{S: newString},
 	}
 }
 
@@ -108,6 +125,7 @@ func (s *ReflectTestSuite) TestPatchStructPartial() {
 		I:  s.defaultValue.I,
 		P:  s.defaultValue.P,
 		SL: []string{newString},
+		ST: s.defaultValue.ST,
 	}
 	err := PatchStruct(&s.defaultValue, &patch)
 	s.NoError(err)
@@ -122,8 +140,15 @@ func (s *ReflectTestSuite) TestPatchStructInvalid() {
 		I: newStringPtr,
 		P: newStringPtr,
 	}
-	expected := s.defaultValue
 	err := PatchStruct(&s.defaultValue, &patch)
+	s.Error(err)
+}
+
+func (s *ReflectTestSuite) TestPatchSubstruct() {
+	patch := &valueSubPatch{ST: &subPatch{S: &s.defaultPatch.ST.S}}
+	expected := s.defaultValue
+	expected.ST.S = s.defaultPatch.ST.S
+	err := PatchStruct(&s.defaultValue, patch)
 	s.NoError(err)
 	s.Equal(expected, s.defaultValue)
 }
