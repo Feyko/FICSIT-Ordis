@@ -17,8 +17,6 @@ type Searchable[E id.IDer] struct {
 	*Module[E]
 }
 
-// TODO: Move search to tags
-// TODO: Deep search
 func (s *Searchable[E]) Search(ctx context.Context, search string) ([]E, error) {
 	return s.Collection.Search(ctx, search)
 }

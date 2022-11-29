@@ -9,32 +9,53 @@ import (
 
 func GetTypeInfo(v any) (TypeInfo, error) {
 	typ := reflect.TypeOf(v)
-	if typ.Kind() != reflect.Struct {
-		return TypeInfo{}, errors.New("v needs to be a struct")
+
+	switch typ.Kind() {
+	case reflect.Interface, reflect.Pointer:
+		return GetTypeInfo(reflect.ValueOf(v).Elem().Interface())
 	}
+
+	if typ.Kind() != reflect.Struct {
+		return TypeInfo{}, errors.New("v needs to be or contain a struct")
+	}
+	value := reflect.ValueOf(v)
 
 	numFields := typ.NumField()
 
-	fields := make([]FieldInfo, numFields)
+	fields := make([]FieldInfo, 0, numFields)
+	embeds := make(map[int]TypeInfo)
 
-	// TODO: Expand to sub-structs
 	for i := 0; i < numFields; i++ {
 		field := typ.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+
+		if field.Type.Kind() == reflect.Struct {
+			embed, err := GetTypeInfo(value.Field(i).Interface())
+			if err != nil {
+				return TypeInfo{}, errors.Wrap(err, "error getting type info for embed struct")
+			}
+			embeds[field.Index[0]] = embed
+			continue
+		}
 
 		info, err := fillFieldInfo(field)
 		if err != nil {
 			return TypeInfo{}, errors.Wrap(err, "error getting the tag values")
 		}
-		fields[i] = info
+		fields = append(fields, info)
 	}
 
 	return TypeInfo{
 		Fields: fields,
+		Embeds: embeds,
 	}, nil
 }
 
 type TypeInfo struct {
 	Fields []FieldInfo
+	Embeds map[int]TypeInfo
 }
 
 type FieldInfo struct {

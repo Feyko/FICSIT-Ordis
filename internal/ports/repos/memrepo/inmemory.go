@@ -76,7 +76,6 @@ func (coll *Collection[T]) GetAll(ctx context.Context) ([]T, error) {
 	return slices.Clone(coll.elements), nil
 }
 
-//Terrible code. Need to refactor this asap
 func (coll *Collection[T]) Search(ctx context.Context, search string) ([]T, error) {
 	var found []T
 	for _, elem := range coll.elements {
@@ -97,29 +96,44 @@ func searchInElement(elem any, search string) (bool, error) {
 		return false, errors.Wrap(err, "error getting type info")
 	}
 
+	return searchForTypeInfo(elem, typeInfo, search)
+}
+
+func searchForTypeInfo(elem any, info repo.TypeInfo, search string) (bool, error) {
 	value := reflect.ValueOf(elem)
 
-	for _, field := range typeInfo.Fields {
+	for _, field := range info.Fields {
 		if field.ToSearch {
-			matched := searchInField(value.FieldByIndex(field.Index), search)
+			matched := searchInField(value.FieldByIndex(field.Index), search, info)
 			if matched {
 				return true, nil
 			}
 		}
 	}
+
+	for index, embed := range info.Embeds {
+		found, err := searchForTypeInfo(value.Field(index).Interface(), embed, search)
+		if err != nil {
+			return false, errors.Wrap(err, "error searching in substruct")
+		}
+		if found {
+			return true, nil
+		}
+	}
+
 	return false, nil
 }
 
-func searchInField(value reflect.Value, search string) bool {
+func searchInField(value reflect.Value, search string, typeInfo repo.TypeInfo) bool {
 	switch value.Kind() {
 	case reflect.Pointer, reflect.Interface:
-		return searchInField(value.Elem(), search)
+		return searchInField(value.Elem(), search, typeInfo)
 	case reflect.Func, reflect.Uintptr, reflect.UnsafePointer, reflect.Chan, reflect.Invalid:
 		return false
 	case reflect.Array, reflect.Slice:
 		length := value.Len()
 		for i := 0; i < length; i++ {
-			matched := searchInField(value.Index(i), search)
+			matched := searchInField(value.Index(i), search, typeInfo)
 			if matched {
 				return true
 			}
@@ -127,7 +141,7 @@ func searchInField(value reflect.Value, search string) bool {
 	case reflect.Map:
 		iter := value.MapRange()
 		for iter.Next() {
-			matched := searchInField(iter.Value(), search)
+			matched := searchInField(iter.Value(), search, typeInfo)
 			if matched {
 				return true
 			}
